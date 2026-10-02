@@ -9,7 +9,7 @@ export default function LoginPage() {
         <input className="input" placeholder="Username" />
         <input className="input" type="password" placeholder="Password" />
         <button type="button" className="btn">
-          Login
+          LogiN
         </button>
         <Link to="/404">Forgot password?</Link>
       </div>
