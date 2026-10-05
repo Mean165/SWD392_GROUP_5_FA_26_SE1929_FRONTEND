@@ -190,6 +190,13 @@ export default function LoginPage() {
         <button type="submit" className="login-submit-btn" disabled={isLoading}>
           {isLoading ? 'Đang đăng nhập...' : 'Login'}
         </button>
+
+        {/* Tùy chọn liên kết Đăng ký tài khoản */}
+        <div className="register-link-row">
+          <Link to="/register" className="register-link">
+            Chưa có tài khoản? Đăng ký ngay
+          </Link>
+        </div>
       </form>
     </div>
   );

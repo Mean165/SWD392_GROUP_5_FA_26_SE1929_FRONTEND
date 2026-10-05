@@ -1,6 +1,20 @@
 import apiClient from '../api/apiClient';
-import type { AuthResponse, LoginRequest, RefreshTokenRequest, User } from '../../types/auth';
+import type { AuthResponse, LoginRequest, RefreshTokenRequest, RegisterRequest, User } from '../../types/auth';
 import type { UserRole } from '../../constants/roles';
+
+/**
+ * Gọi API POST /api/auth/register
+ * Không truyền studentOrStaffCode và roleCode vì backend sẽ tự sinh
+ */
+export const register = async (payload: RegisterRequest): Promise<any> => {
+  const response = await apiClient.post('/auth/register', {
+    fullName: payload.fullName,
+    email: payload.email,
+    password: payload.password,
+  });
+
+  return response.data?.data ?? response.data;
+};
 
 /**
  * Gọi API POST /api/auth/login
