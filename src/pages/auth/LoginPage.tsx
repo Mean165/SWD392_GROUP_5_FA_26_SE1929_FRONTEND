@@ -4,6 +4,48 @@ import { useAuth } from '../../hooks/useAuth';
 import './LoginPage.css';
 
 /**
+ * Hàm phân tích và trích xuất thông báo lỗi thân thiện cho người dùng
+ */
+function extractErrorMessage(error: any): string {
+  // 1. Kiểm tra nếu backend trả về HTTP 500 (Internal Server Error)
+  if (error?.response?.status === 500) {
+    return 'Hệ thống máy chủ đang gặp sự cố (Lỗi 500). Vui lòng thử lại sau ít phút hoặc liên hệ quản trị viên.';
+  }
+
+  // 2. Kiểm tra nếu mất kết nối mạng hoặc server không phản hồi
+  if (error?.code === 'ERR_NETWORK' || !error?.response) {
+    return 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc thử lại.';
+  }
+
+  // 3. Lấy dữ liệu phản hồi từ backend (xử lý cả khi response.data là string JSON hoặc object)
+  let data = error?.response?.data;
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      // nếu là chuỗi thuần không phải JSON
+    }
+  }
+
+  const backendMessage = data?.message || data?.error;
+
+  if (backendMessage) {
+    if (backendMessage === 'Invalid email/code or password') {
+      return 'Email/mã số hoặc mật khẩu không chính xác.';
+    }
+    if (backendMessage === 'User account is inactive') {
+      return 'Tài khoản của bạn đã bị khóa hoặc chưa được kích hoạt.';
+    }
+    if (backendMessage === 'Unexpected server error') {
+      return 'Hệ thống máy chủ đang gặp sự cố (Lỗi 500). Vui lòng thử lại sau ít phút.';
+    }
+    return backendMessage;
+  }
+
+  return 'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin tài khoản.';
+}
+
+/**
  * Giao diện Đăng nhập (LoginPage) cho hệ thống AI Oral Examination
  * Tích hợp API POST /api/auth/login và điều hướng theo Role người dùng
  */
@@ -30,7 +72,7 @@ export default function LoginPage() {
 
     try {
       // Gửi yêu cầu đăng nhập tới API /api/auth/login
-      const loggedInUser = await login({ email, password });
+      const loggedInUser = await login({ email: email.trim(), password });
 
       // Điều hướng người dùng dựa theo Role trả về từ backend
       const role = loggedInUser?.role;
@@ -42,12 +84,8 @@ export default function LoginPage() {
         navigate('/student/dashboard', { replace: true });
       }
     } catch (error: any) {
-      // Bắt lỗi và hiển thị thông báo phản hồi từ Backend
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin tài khoản.';
-      setErrorMessage(message);
+      // Xử lý lỗi và hiển thị thông báo rõ ràng cho người dùng
+      setErrorMessage(extractErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
