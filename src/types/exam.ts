@@ -1,3 +1,5 @@
+export * from './examSession';
+
 export interface Exam {
   id?: number;
   name: string;
@@ -7,16 +9,6 @@ export interface Exam {
   status?: string;
   createdBy?: number;
   createdAt?: string;
-}
-
-export interface ExamSession {
-  id?: number;
-  examId: number;
-  sessionCode?: string;
-  scheduledAt?: string;
-  startedAt?: string;
-  endedAt?: string;
-  status?: string;
 }
 
 export interface ExamParticipant {

@@ -9,7 +9,7 @@ import './AdminLayout.css';
 const navItems = [
   {
     to: APP_ROUTES.admin.dashboard,
-    label: 'Dashboard',
+    label: 'Tổng quan',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7" />
@@ -20,8 +20,20 @@ const navItems = [
     ),
   },
   {
+    to: APP_ROUTES.admin.examSessions,
+    label: 'Ca thi & Lịch thi',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    ),
+  },
+  {
     to: APP_ROUTES.admin.users,
-    label: 'Users',
+    label: 'Người dùng',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -39,7 +51,6 @@ export default function AdminLayout() {
   const { user: authUser, logout } = useAuth();
   const [adminProfile, setAdminProfile] = useState<UserResponse | null>(null);
 
-  // Lấy thông tin chi tiết Admin hiện tại từ API GET /api/users/me nếu đã đăng nhập
   useEffect(() => {
     let isMounted = true;
     getUserById('me')
@@ -49,7 +60,7 @@ export default function AdminLayout() {
         }
       })
       .catch(() => {
-        // Fallback sử dụng authUser từ context nếu endpoint /me chưa sẵn sàng
+        // Fallback
       });
 
     return () => {
@@ -62,14 +73,15 @@ export default function AdminLayout() {
     navigate('/login', { replace: true });
   };
 
-  // Tiêu đề header phụ thuộc vào trang hiện tại
-  const pageTitle = location.pathname.includes('/users')
-    ? 'User Management'
-    : 'Admin Dashboard';
+  const pageTitle = location.pathname.includes('/exam-sessions')
+    ? 'Quản lý Ca thi & Lịch thi'
+    : location.pathname.includes('/users')
+    ? 'Quản lý Người dùng'
+    : 'Tổng quan Hệ thống Quản trị';
 
-  const displayName = adminProfile?.fullName || authUser?.fullName || 'Administrator';
+  const displayName = adminProfile?.fullName || authUser?.fullName || 'Quản trị viên';
   const displayEmail = adminProfile?.email || authUser?.email || 'admin@aives.edu.vn';
-  const initial = displayName.charAt(0).toUpperCase() || 'A';
+  const initial = displayName.charAt(0).toUpperCase() || 'Q';
 
   return (
     <div className="admin-layout-shell">
@@ -79,7 +91,7 @@ export default function AdminLayout() {
           <div className="admin-brand-icon">A</div>
           <div className="admin-brand-text">
             <span className="admin-brand-title">AIVES</span>
-            <span className="admin-brand-subtitle">Admin Portal</span>
+            <span className="admin-brand-subtitle">Cổng Quản trị</span>
           </div>
         </div>
 
@@ -101,7 +113,6 @@ export default function AdminLayout() {
 
       {/* Main panel bên phải */}
       <div className="admin-main-panel">
-        {/* Header phía trên */}
         <header className="admin-top-header">
           <div className="admin-header-title">{pageTitle}</div>
 
@@ -122,12 +133,11 @@ export default function AdminLayout() {
               onClick={handleLogout}
               title="Đăng xuất khỏi hệ thống"
             >
-              Logout
+              Đăng xuất
             </button>
           </div>
         </header>
 
-        {/* Nội dung trang */}
         <main className="admin-content-body">
           <Outlet />
         </main>

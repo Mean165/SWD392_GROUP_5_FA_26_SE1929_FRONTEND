@@ -15,9 +15,22 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'swd_auth_user';
+const FALLBACK_STORAGE_KEY = 'user';
+
+function getInitialUser(): User | null {
+  try {
+    const fromSwd = storage.get<User>(AUTH_STORAGE_KEY);
+    if (fromSwd) return fromSwd;
+    const fromUser = storage.get<User>(FALLBACK_STORAGE_KEY);
+    if (fromUser) return fromUser;
+  } catch {
+    // ignore
+  }
+  return null;
+}
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(() => storage.get<User>(AUTH_STORAGE_KEY));
+  const [user, setUser] = useState<User | null>(getInitialUser);
 
   const login = async (payload: LoginRequest): Promise<User> => {
     const authResponse = await authService.login(payload);
@@ -30,6 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     storage.set(AUTH_STORAGE_KEY, loggedInUser);
+    storage.set(FALLBACK_STORAGE_KEY, loggedInUser);
     setUser(loggedInUser);
     return loggedInUser;
   };
@@ -39,6 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await authService.logout();
     } finally {
       storage.remove(AUTH_STORAGE_KEY);
+      storage.remove(FALLBACK_STORAGE_KEY);
       localStorage.removeItem('accessToken');
       setUser(null);
     }
@@ -53,6 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const currentUser = await authService.getCurrentUser();
       if (currentUser) {
         storage.set(AUTH_STORAGE_KEY, currentUser);
+        storage.set(FALLBACK_STORAGE_KEY, currentUser);
         setUser(currentUser);
       }
       return currentUser;

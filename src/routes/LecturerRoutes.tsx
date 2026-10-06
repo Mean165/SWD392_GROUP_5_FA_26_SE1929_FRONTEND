@@ -1,8 +1,7 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { ROLES } from '../constants/roles';
 import LecturerLayout from '../layouts/LecturerLayout';
 import ProtectedRoute from './ProtectedRoute';
-import LecturerDashboardPage from '../pages/lecturer/DashboardPage';
 import QuestionBankPage from '../pages/lecturer/questions/QuestionBankPage';
 import QuestionDetailPage from '../pages/lecturer/questions/QuestionDetailPage';
 import CreateQuestionPage from '../pages/lecturer/questions/CreateQuestionPage';
@@ -30,28 +29,67 @@ export default function LecturerRoutes() {
     <Routes>
       <Route element={<ProtectedRoute allowedRoles={[ROLES.LECTURER]} />}>
         <Route element={<LecturerLayout />}>
-          <Route path="/lecturer/dashboard" element={<LecturerDashboardPage />} />
+          {/* Index & Dashboard redirect to /lecturer/questions per requirement */}
+          <Route path="" element={<Navigate to="/lecturer/questions" replace />} />
+          <Route path="dashboard" element={<Navigate to="/lecturer/questions" replace />} />
+          <Route path="/lecturer/dashboard" element={<Navigate to="/lecturer/questions" replace />} />
+
+          {/* Question Bank Routes (support both relative and absolute paths) */}
+          <Route path="questions" element={<QuestionBankPage />} />
           <Route path="/lecturer/questions" element={<QuestionBankPage />} />
+          <Route path="questions/create" element={<CreateQuestionPage />} />
           <Route path="/lecturer/questions/create" element={<CreateQuestionPage />} />
+          <Route path="questions/import" element={<ImportQuestionPage />} />
           <Route path="/lecturer/questions/import" element={<ImportQuestionPage />} />
+          <Route path="questions/generate" element={<GenerateQuestionPage />} />
           <Route path="/lecturer/questions/generate" element={<GenerateQuestionPage />} />
+          <Route path="questions/:id" element={<QuestionDetailPage />} />
           <Route path="/lecturer/questions/:id" element={<QuestionDetailPage />} />
+          <Route path="questions/:id/edit" element={<EditQuestionPage />} />
           <Route path="/lecturer/questions/:id/edit" element={<EditQuestionPage />} />
+
+          {/* Rubrics */}
+          <Route path="rubrics" element={<RubricPage />} />
           <Route path="/lecturer/rubrics" element={<RubricPage />} />
+          <Route path="questions/rubrics" element={<RubricPage />} />
+          <Route path="/lecturer/questions/rubrics" element={<RubricPage />} />
+
+          {/* Exam Management */}
+          <Route path="exams" element={<ExamListPage />} />
           <Route path="/lecturer/exams" element={<ExamListPage />} />
+          <Route path="exams/create" element={<CreateExamPage />} />
           <Route path="/lecturer/exams/create" element={<CreateExamPage />} />
+          <Route path="exams/:id" element={<ExamDetailPage />} />
           <Route path="/lecturer/exams/:id" element={<ExamDetailPage />} />
+          <Route path="exams/:id/schedule" element={<ExamSchedulePage />} />
           <Route path="/lecturer/exams/:id/schedule" element={<ExamSchedulePage />} />
+          <Route path="exams/:id/participants" element={<ExamParticipantsPage />} />
           <Route path="/lecturer/exams/:id/participants" element={<ExamParticipantsPage />} />
+
+          {/* Evaluations */}
+          <Route path="evaluations" element={<EvaluationListPage />} />
           <Route path="/lecturer/evaluations" element={<EvaluationListPage />} />
+          <Route path="evaluations/:id" element={<EvaluationDetailPage />} />
           <Route path="/lecturer/evaluations/:id" element={<EvaluationDetailPage />} />
+          <Route path="evaluations/:id/review" element={<ScoreReviewPage />} />
           <Route path="/lecturer/evaluations/:id/review" element={<ScoreReviewPage />} />
+
+          {/* Monitoring & Reports */}
+          <Route path="monitoring" element={<MonitoringPage />} />
           <Route path="/lecturer/monitoring" element={<MonitoringPage />} />
+          <Route path="monitoring/recording" element={<RecordingPage />} />
           <Route path="/lecturer/monitoring/recording" element={<RecordingPage />} />
+          <Route path="monitoring/event-log" element={<EventLogPage />} />
           <Route path="/lecturer/monitoring/event-log" element={<EventLogPage />} />
+          <Route path="reports" element={<ClassReportPage />} />
           <Route path="/lecturer/reports" element={<ClassReportPage />} />
+          <Route path="reports/questions" element={<QuestionStatisticsPage />} />
           <Route path="/lecturer/reports/questions" element={<QuestionStatisticsPage />} />
+          <Route path="reports/export" element={<GradeExportPage />} />
           <Route path="/lecturer/reports/export" element={<GradeExportPage />} />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/lecturer/questions" replace />} />
         </Route>
       </Route>
     </Routes>

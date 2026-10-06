@@ -48,3 +48,6 @@ export const updateExamSchedule = async (
   // TODO: connect to backend /exam/:id/schedule/:scheduleId
   return Promise.resolve({} as ExamSchedule);
 };
+
+export * from './examSessionService';
+
