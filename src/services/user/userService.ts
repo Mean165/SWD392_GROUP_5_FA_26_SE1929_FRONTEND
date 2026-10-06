@@ -1,26 +1,75 @@
 import apiClient from '../api/apiClient';
-import type { UserProfile } from '../../types/user';
+import type {
+  UserResponse,
+  CreateUserRequest,
+  UpdateUserRequest,
+  UserFilterRequest,
+  ApiResponse,
+} from '../../types/user';
 
-export const getUsers = async (): Promise<UserProfile[]> => {
-  // TODO: connect to backend /user
-  return Promise.resolve([]);
+/**
+ * Service quản lý các API liên quan đến User trong hệ thống AIVES
+ * Tuân thủ backend UserController: /api/users
+ */
+
+/**
+ * Lấy danh sách toàn bộ User
+ * GET /api/users
+ */
+export const getUsers = async (): Promise<UserResponse[]> => {
+  const response = await apiClient.get<ApiResponse<UserResponse[]>>('/users');
+  return response.data?.data ?? (response.data as unknown as UserResponse[]) ?? [];
 };
 
-export const getUserById = async (id: number): Promise<UserProfile | null> => {
-  // TODO: connect to backend /user/:id
-  return Promise.resolve(null);
+/**
+ * Lấy thông tin chi tiết một User theo ID hoặc "me" cho tài khoản hiện tại
+ * GET /api/users/{id}
+ */
+export const getUserById = async (id: string): Promise<UserResponse> => {
+  const response = await apiClient.get<ApiResponse<UserResponse>>(`/users/${id}`);
+  return response.data?.data ?? (response.data as unknown as UserResponse);
 };
 
-export const createUser = async (payload: Partial<UserProfile>): Promise<UserProfile> => {
-  // TODO: connect to backend /user
-  return Promise.resolve({} as UserProfile);
+/**
+ * Lọc danh sách User theo tên, email, role
+ * POST /api/users/filter
+ */
+export const filterUsers = async (params: UserFilterRequest): Promise<UserResponse[]> => {
+  const response = await apiClient.post<ApiResponse<UserResponse[]>>('/users/filter', params);
+  return response.data?.data ?? (response.data as unknown as UserResponse[]) ?? [];
 };
 
-export const updateUser = async (id: number, payload: Partial<UserProfile>): Promise<UserProfile> => {
-  // TODO: connect to backend /user/:id
-  return Promise.resolve({} as UserProfile);
+/**
+ * Tạo mới một User
+ * POST /api/users
+ */
+export const createUser = async (data: CreateUserRequest): Promise<UserResponse> => {
+  const response = await apiClient.post<ApiResponse<UserResponse>>('/users', data);
+  return response.data?.data ?? (response.data as unknown as UserResponse);
 };
 
-export const deleteUser = async (id: number): Promise<void> => {
-  // TODO: connect to backend /user/:id
+/**
+ * Cập nhật thông tin User
+ * PUT /api/users/{id}
+ */
+export const updateUser = async (id: string, data: UpdateUserRequest): Promise<UserResponse> => {
+  const response = await apiClient.put<ApiResponse<UserResponse>>(`/users/${id}`, data);
+  return response.data?.data ?? (response.data as unknown as UserResponse);
+};
+
+/**
+ * Xóa một User theo ID
+ * DELETE /api/users/{id}
+ */
+export const deleteUser = async (id: string): Promise<void> => {
+  await apiClient.delete<ApiResponse<void>>(`/users/${id}`);
+};
+
+export default {
+  getUsers,
+  getUserById,
+  filterUsers,
+  createUser,
+  updateUser,
+  deleteUser,
 };

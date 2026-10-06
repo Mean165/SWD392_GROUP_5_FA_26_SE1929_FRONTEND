@@ -43,9 +43,9 @@ export default function RegisterPage() {
       return;
     }
 
-    // Kiểm tra độ dài mật khẩu: phải dài hơn 6 kí tự
-    if (password.length <= 6) {
-      setErrorMessage('Mật khẩu phải dài hơn 6 kí tự.');
+    // Kiểm tra độ dài mật khẩu: tối thiểu 6 kí tự
+    if (password.length < 6) {
+      setErrorMessage('Mật khẩu phải có tối thiểu 6 kí tự.');
       return;
     }
 
@@ -197,7 +197,7 @@ export default function RegisterPage() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               className="form-input password-input"
-              placeholder="Nhập mật khẩu (hơn 6 kí tự)"
+              placeholder="Nhập mật khẩu (tối thiểu 6 kí tự)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
