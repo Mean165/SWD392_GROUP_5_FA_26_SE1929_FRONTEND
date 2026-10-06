@@ -1,5 +1,6 @@
 export const APP_ROUTES = {
   login: '/login',
+  register: '/register',
   forbidden: '/403',
   notFound: '/404',
   admin: {
