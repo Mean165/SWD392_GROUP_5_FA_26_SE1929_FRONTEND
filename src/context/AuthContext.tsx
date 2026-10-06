@@ -1,11 +1,12 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { User, LoginRequest } from '../types/auth';
 import { storage } from '../utils/storage';
+import * as authService from '../services/auth/authService';
 
 interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
-  login: (payload: LoginRequest) => Promise<void>;
+  login: (payload: LoginRequest) => Promise<User>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
   getCurrentUser: () => Promise<User | null>;
@@ -18,23 +19,46 @@ const AUTH_STORAGE_KEY = 'swd_auth_user';
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => storage.get<User>(AUTH_STORAGE_KEY));
 
-  const login = async (_payload: LoginRequest): Promise<void> => {
-    // TODO: integrate with authService.login
-    // This placeholder intentionally does not create fake auth data.
+  const login = async (payload: LoginRequest): Promise<User> => {
+    const authResponse = await authService.login(payload);
+    const loggedInUser: User = authResponse.user || {
+      id: authResponse.userId || 1,
+      email: authResponse.email || payload.email,
+      fullName: authResponse.fullName || '',
+      role: (authResponse.roleName || 'STUDENT') as any,
+      studentOrStaffCode: authResponse.studentOrStaffCode,
+    };
+
+    storage.set(AUTH_STORAGE_KEY, loggedInUser);
+    setUser(loggedInUser);
+    return loggedInUser;
   };
 
   const logout = async (): Promise<void> => {
-    storage.remove(AUTH_STORAGE_KEY);
-    setUser(null);
+    try {
+      await authService.logout();
+    } finally {
+      storage.remove(AUTH_STORAGE_KEY);
+      localStorage.removeItem('accessToken');
+      setUser(null);
+    }
   };
 
   const refreshToken = async (): Promise<void> => {
-    // TODO: integrate with authService.refreshToken
+    // Refresh token placeholder
   };
 
   const getCurrentUser = async (): Promise<User | null> => {
-    // TODO: integrate with authService.getCurrentUser
-    return user;
+    try {
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser) {
+        storage.set(AUTH_STORAGE_KEY, currentUser);
+        setUser(currentUser);
+      }
+      return currentUser;
+    } catch {
+      return user;
+    }
   };
 
   const value = useMemo<AuthContextValue>(

@@ -1,0 +1,225 @@
+/* ==========================================================================
+   Giao diện Đăng nhập (LoginPage) - AI Oral Examination
+   Tông màu: Primary Blue (#2563eb / #1d4ed8), Trắng (#ffffff), Nền (#f8fafc)
+   ========================================================================== */
+
+/* Card đăng nhập căn giữa */
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 2.25rem 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Header của Card: Logo, Tiêu đề, Phụ đề */
+.login-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+/* Biểu tượng công nghệ / thi cử */
+.login-logo-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 1rem;
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dbeafe;
+}
+
+/* Tiêu đề Card */
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.35rem 0;
+  letter-spacing: -0.025em;
+}
+
+/* Phụ đề ngắn */
+.login-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Form đăng nhập */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Khối input và label */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  text-align: left;
+}
+
+/* Nhãn trường nhập */
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+/* Ô nhập liệu */
+.form-input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
+  color: #0f172a;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+/* Trạng thái hover trên input */
+.form-input:hover {
+  border-color: #94a3b8;
+}
+
+/* Trạng thái focus trên input - viền xanh rõ ràng */
+.form-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.form-input::placeholder {
+  color: #94a3b8;
+}
+
+/* Vùng bao bọc ô nhập mật khẩu và nút ẩn/hiện */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input {
+  padding-right: 2.75rem;
+}
+
+/* Nút chuyển đổi ẩn/hiện mật khẩu */
+.toggle-password-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  border-radius: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.toggle-password-btn:hover {
+  color: #1e293b;
+  background-color: #f1f5f9;
+}
+
+.toggle-password-btn:focus-visible {
+  outline: 2px solid #2563eb;
+}
+
+/* Liên kết Quên mật khẩu */
+.forgot-password-row {
+  display: flex;
+  justify-content: center;
+  margin-top: -0.25rem;
+}
+
+.forgot-password-link {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.forgot-password-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Nút Đăng nhập (Submit Button) */
+.login-submit-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  margin-top: 0.25rem;
+}
+
+/* Trạng thái hover, focus và active của nút submit */
+.login-submit-btn:hover {
+  background-color: #1d4ed8;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.login-submit-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Thông báo lỗi khi đăng nhập thất bại */
+.login-error-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+}
+
+.login-error-icon {
+  flex-shrink: 0;
+}
+
+
+/* Responsive tối ưu trên màn hình nhỏ / di động */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1.75rem 1.25rem;
+    box-shadow: none;
+  }
+
+  .login-title {
+    font-size: 1.35rem;
+  }
+}
