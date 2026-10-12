@@ -2,10 +2,11 @@ export type QuestionStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'DRAFT' | 'AC
 
 export type BloomLevel = 'REMEMBER' | 'UNDERSTAND' | 'APPLY' | 'ANALYZE' | 'EVALUATE' | 'CREATE';
 
-export type QuestionSource = 'MANUAL' | 'AI_GENERATED' | 'IMPORTED';
+export type QuestionSource = 'MANUAL' | 'LECTURER_MANUAL' | 'AI_GENERATED' | 'IMPORTED';
 
 export interface RubricCriteria {
   id?: string | number;
+  criteriaId?: string;
   questionId?: string | number;
   criteriaName: string;
   maxScore?: number; // Mặc định thang điểm 10
@@ -15,15 +16,17 @@ export interface RubricCriteria {
 }
 
 export interface Question {
-  id: string | number;
+  id: string;
+  questionId?: string;
   content: string; // Nội dung câu hỏi (chính)
-  questionText: string; // Tương thích ngược
-  chapter?: string; // Tên chương theo môn học
+  questionText: string; // Tương thích backend
+  chapter?: string; // Tên chương / môn học
   topic?: string;
-  topicId: string | number;
+  topicId: string;
   topicName?: string;
   bloomLevel: BloomLevel;
   status: QuestionStatus;
+  approvalStatus?: QuestionStatus | string;
   sourceType?: QuestionSource | string;
   createdBy?: string; // Giảng viên khởi tạo
   rubrics: RubricCriteria[];
@@ -31,33 +34,34 @@ export interface Question {
   updatedAt?: string;
 
   // Thuộc tính tương thích bổ sung
-  subjectId?: number;
+  subjectId?: number | string;
+  subjectCode?: string;
   difficulty?: string;
 }
 
 export interface Topic {
-  id: string | number;
+  id: string;
   name: string;
   code?: string;
   description?: string;
-  subjectId?: number;
+  subjectId?: number | string;
 }
 
 export interface CreateQuestionRequest {
   content?: string;
   questionText?: string;
   chapter?: string;
-  topicId: string | number;
+  topicId: string;
   topicName?: string;
   bloomLevel: BloomLevel;
-  sourceType?: 'MANUAL' | string;
+  sourceType?: 'MANUAL' | 'LECTURER_MANUAL' | 'AI_GENERATED' | string;
   createdBy?: string;
   rubrics: Omit<RubricCriteria, 'id'>[];
   status?: QuestionStatus;
 }
 
 export interface QuestionFilterParams {
-  topicId?: string | number;
+  topicId?: string;
   chapter?: string;
   bloomLevel?: BloomLevel | string;
   status?: QuestionStatus | string;
@@ -74,8 +78,27 @@ export interface QuestionImportRequest {
   content?: string;
 }
 
-export interface GenerateQuestionRequest {
+export interface QuestionGenerationRequest {
   prompt: string;
-  subjectId?: number;
-  count?: number;
+  subjectCode?: string;
+  topicCode?: string;
+  numberOfQuestions?: number;
+}
+
+export interface RubricRequest {
+  questionId: string;
+  criteriaName: string;
+  expectedKnowledgePoints: string;
+  weightRatio: number;
+}
+
+export interface BackendQuestionResponse {
+  questionId: string;
+  topicId: string;
+  createdBy: string;
+  questionText: string;
+  bloomLevel: string;
+  sourceType: string;
+  approvalStatus: string;
+  createdAt: string;
 }

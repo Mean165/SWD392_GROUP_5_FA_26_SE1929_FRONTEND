@@ -43,10 +43,10 @@ export default function LecturerRoutes() {
           <Route path="/lecturer/questions/import" element={<ImportQuestionPage />} />
           <Route path="questions/generate" element={<GenerateQuestionPage />} />
           <Route path="/lecturer/questions/generate" element={<GenerateQuestionPage />} />
-          <Route path="questions/:id" element={<QuestionDetailPage />} />
-          <Route path="/lecturer/questions/:id" element={<QuestionDetailPage />} />
           <Route path="questions/:id/edit" element={<EditQuestionPage />} />
           <Route path="/lecturer/questions/:id/edit" element={<EditQuestionPage />} />
+          <Route path="questions/:id" element={<QuestionDetailPage />} />
+          <Route path="/lecturer/questions/:id" element={<QuestionDetailPage />} />
 
           {/* Rubrics */}
           <Route path="rubrics" element={<RubricPage />} />

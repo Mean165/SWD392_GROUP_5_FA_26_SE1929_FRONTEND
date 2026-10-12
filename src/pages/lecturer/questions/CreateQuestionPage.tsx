@@ -18,31 +18,31 @@ export default function CreateQuestionPage() {
   const topics: Topic[] = DEFAULT_TOPICS;
 
   // Form Fields
-  const [topicId, setTopicId] = useState<string>(topics[0]?.id ? String(topics[0].id) : 'ch-1');
+  const [topicId, setTopicId] = useState<string>(topics[0]?.id ? String(topics[0].id) : '30000000-0000-0000-0000-000000000001');
   const [content, setContent] = useState<string>('');
   const [bloomLevel, setBloomLevel] = useState<BloomLevel>('UNDERSTAND');
-  const [createdBy, setCreatedBy] = useState<string>('TS. Nguyễn Thị Minh (Bộ môn Triết học)');
+  const [createdBy, setCreatedBy] = useState<string>('TS. Nguyễn Hoàng Nam (Bộ môn Phần mềm)');
   const sourceType = 'MANUAL';
 
   // Dynamic Rubric state - Khởi tạo sẵn 2 tiêu chí mẫu có tổng trọng số = 1.00 (100%)
   const [rubrics, setRubrics] = useState<RubricRowState[]>([
     {
       id: 'crit-1',
-      criteriaName: 'Nội dung lý luận cơ bản & chuẩn xác khái niệm',
+      criteriaName: 'Độ chính xác và tính toàn vẹn của giải pháp kỹ thuật',
       maxScore: 10,
       weightRatio: 0.5,
       expectedKnowledgePoints:
-        'Trình bày chính xác định nghĩa, nội dung nguyên lý hoặc quy luật triết học theo giáo trình chuẩn Bộ GD&ĐT.',
-      description: 'Đạt tối đa khi trình bày đầy đủ định nghĩa và thuật ngữ triết học chính xác.',
+        'Trình bày chuẩn xác khái niệm cốt lõi, cơ chế hoạt động và kiến trúc hệ thống theo yêu cầu đề bài.',
+      description: 'Đạt tối đa khi trình bày đầy đủ định nghĩa, sơ đồ nguyên lý và công nghệ sử dụng.',
     },
     {
       id: 'crit-2',
-      criteriaName: 'Ý nghĩa phương pháp luận & vận dụng thực tiễn',
+      criteriaName: 'Khả năng biện luận và phản hồi câu hỏi đào sâu của AI',
       maxScore: 10,
       weightRatio: 0.5,
       expectedKnowledgePoints:
-        'Rút ra bài học phương pháp luận đúng đắn, phê phán các quan điểm sai lầm, liên hệ với thực tiễn học tập và xã hội.',
-      description: 'Đạt tối đa khi liên hệ được với thực tiễn cách mạng Việt Nam hoặc rèn luyện bản thân.',
+        'Phân tích ưu nhược điểm, liên hệ thực tế triển khai trong dự án và phản biện tự tin khi AI hỏi xoáy.',
+      description: 'Đạt tối đa khi phân tích đa chiều và chứng minh được quyết định thiết kế kỹ thuật.',
     },
   ]);
 
@@ -74,8 +74,8 @@ export default function CreateQuestionPage() {
   // Thêm dòng tiêu chí rubric mới
   const handleAddRubric = () => {
     const newId = `crit-${Date.now()}`;
-    setRubrics([
-      ...rubrics,
+    setRubrics((prev) => [
+      ...prev,
       {
         id: newId,
         criteriaName: '',
@@ -89,20 +89,25 @@ export default function CreateQuestionPage() {
 
   // Xóa dòng rubric
   const handleRemoveRubric = (idToRemove: string) => {
-    if (rubrics.length <= 1) return;
-    setRubrics(rubrics.filter((r) => r.id !== idToRemove));
+    setRubrics((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((r) => r.id !== idToRemove);
+    });
   };
 
-  // Cập nhật giá trị một dòng rubric
+  // Cập nhật giá trị một dòng rubric (hỗ trợ 1 field hoặc object nhiều field cùng lúc)
   const handleRubricChange = (
     id: string,
-    field: keyof Omit<RubricRowState, 'id'>,
-    value: any,
+    fieldOrUpdates: keyof Omit<RubricRowState, 'id'> | Partial<Omit<RubricRowState, 'id'>>,
+    value?: any,
   ) => {
-    setRubrics(
-      rubrics.map((r) => {
+    setRubrics((prev) =>
+      prev.map((r) => {
         if (r.id === id) {
-          return { ...r, [field]: value };
+          if (typeof fieldOrUpdates === 'string') {
+            return { ...r, [fieldOrUpdates]: value };
+          }
+          return { ...r, ...fieldOrUpdates };
         }
         return r;
       }),
@@ -111,16 +116,17 @@ export default function CreateQuestionPage() {
 
   // Tự động phân bổ đều trọng số
   const handleDistributeWeightsEvenly = () => {
-    if (rubrics.length === 0) return;
-    const count = rubrics.length;
-    const baseWeight = Math.floor((1.0 / count) * 100) / 100;
-    const remainder = Math.round((1.0 - baseWeight * count) * 100) / 100;
+    setRubrics((prev) => {
+      if (prev.length === 0) return prev;
+      const count = prev.length;
+      const baseWeight = Math.floor((1.0 / count) * 100) / 100;
+      const remainder = Math.round((1.0 - baseWeight * count) * 100) / 100;
 
-    const distributed = rubrics.map((r, index) => ({
-      ...r,
-      weightRatio: index === 0 ? Number((baseWeight + remainder).toFixed(2)) : baseWeight,
-    }));
-    setRubrics(distributed);
+      return prev.map((r, index) => ({
+        ...r,
+        weightRatio: index === 0 ? Number((baseWeight + remainder).toFixed(2)) : baseWeight,
+      }));
+    });
   };
 
   // Validation form
@@ -237,7 +243,7 @@ export default function CreateQuestionPage() {
             Tạo câu hỏi & Thiết lập Rubric
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Học phần: Triết học Mác – Lênin • Chuẩn hóa câu hỏi thi vấn đáp và tiêu chuẩn thang điểm
+            Học phần: SWD392, PRN231, DBI202 • Chuẩn hóa câu hỏi thi vấn đáp và tiêu chuẩn thang điểm
           </p>
         </div>
 
@@ -256,10 +262,10 @@ export default function CreateQuestionPage() {
         <div className="text-2xl leading-none">💡</div>
         <div className="space-y-1 text-xs text-emerald-900">
           <h4 className="font-bold text-sm text-emerald-800">
-            Quy chuẩn biên soạn câu hỏi Triết học Mác – Lênin
+            Quy chuẩn biên soạn câu hỏi vấn đáp chuyên ngành
           </h4>
           <p className="leading-relaxed">
-            • <strong>Chương 1 & Chương 2:</strong> Tập trung vào vấn đề cơ bản của triết học, bản chất vật chất và ý thức, hai nguyên lý và ba quy luật của phép biện chứng duy vật.
+            • <strong>Kiến trúc & Kỹ thuật:</strong> Tập trung vào giải thích bản chất kiến trúc, so sánh ưu/nhược điểm, xử lý tình huống thực tế và tối ưu hiệu năng.
           </p>
           <p className="leading-relaxed">
             • <strong>Quy định Rubric:</strong> Mỗi câu hỏi cần có từ 2–4 tiêu chí thành phần với thang điểm 10. Tổng trọng số của tất cả các tiêu chí BẮT BUỘC phải bằng đúng 1.00 (100%).
@@ -326,8 +332,8 @@ export default function CreateQuestionPage() {
               >
                 <option value="REMEMBER">Nhận biết (Remember) — Tái hiện chuẩn xác định nghĩa, phạm trù</option>
                 <option value="UNDERSTAND">Thông hiểu (Understand) — Cắt nghĩa, giải thích bản chất nguyên lý</option>
-                <option value="APPLY">Vận dụng (Apply) — Gắn lý luận triết học vào thực tiễn xã hội</option>
-                <option value="ANALYZE">Phân tích (Analyze) — Mổ xẻ mâu thuẫn, so sánh và đánh giá biện chứng</option>
+                <option value="APPLY">Vận dụng (Apply) — Áp dụng lý thuyết vào giải quyết bài toán thực tế</option>
+                <option value="ANALYZE">Phân tích (Analyze) — Mổ xẻ kiến trúc, so sánh và đánh giá giải pháp kỹ thuật</option>
               </select>
               {errors.bloomLevel && <p className="text-rose-600 text-[11px]">{errors.bloomLevel}</p>}
             </div>
@@ -346,7 +352,7 @@ export default function CreateQuestionPage() {
               className={`w-full rounded-xl border bg-slate-50/50 p-3.5 text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                 errors.content ? 'border-rose-400' : 'border-slate-200'
               }`}
-              placeholder="Nhập nội dung câu hỏi vấn đáp Triết học Mác – Lênin (VD: Trình bày định nghĩa vật chất của V.I.Lênin và phân tích ý nghĩa phương pháp luận...)"
+              placeholder="Nhập nội dung câu hỏi vấn đáp chuyên ngành (VD: Trình bày Dependency Inversion Principle và cách áp dụng trong kiến trúc Clean Architecture...)"
               value={content}
               onChange={(e) => {
                 setContent(e.target.value);
@@ -367,7 +373,7 @@ export default function CreateQuestionPage() {
               className="w-full h-10 rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               value={createdBy}
               onChange={(e) => setCreatedBy(e.target.value)}
-              placeholder="VD: TS. Nguyễn Thị Minh (Bộ môn Triết học Mác – Lênin)"
+              placeholder="VD: ThS. Nguyễn Hải Nam (Bộ môn KTPM)"
               disabled={isSubmitting}
             />
           </div>
@@ -492,7 +498,7 @@ export default function CreateQuestionPage() {
                         className={`w-full h-10 rounded-xl border bg-white px-3 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                           nameErr ? 'border-rose-400' : 'border-slate-200'
                         }`}
-                        placeholder="VD: Định nghĩa vật chất của V.I.Lênin"
+                        placeholder="VD: Khái niệm và nguyên lý hoạt động"
                         value={row.criteriaName}
                         onChange={(e) => handleRubricChange(row.id, 'criteriaName', e.target.value)}
                         disabled={isSubmitting}
@@ -552,8 +558,11 @@ export default function CreateQuestionPage() {
                       placeholder="Nêu rõ các ý chính thí sinh cần phân tích chuẩn xác để đạt trọn điểm của tiêu chí này..."
                       value={row.expectedKnowledgePoints}
                       onChange={(e) => {
-                        handleRubricChange(row.id, 'expectedKnowledgePoints', e.target.value);
-                        handleRubricChange(row.id, 'description', e.target.value);
+                        const val = e.target.value;
+                        handleRubricChange(row.id, {
+                          expectedKnowledgePoints: val,
+                          description: val,
+                        });
                       }}
                       disabled={isSubmitting}
                     />

@@ -3,9 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { Question, QuestionStatus } from '../../../types/question';
 import {
   getQuestions,
+  deleteQuestion,
   updateQuestionStatus,
   DEFAULT_TOPICS,
-  INITIAL_MOCK_QUESTIONS_ML,
 } from '../../../services/question/questionService';
 import QuestionFilter, { type QuestionFilterState } from '../../../components/questions/QuestionFilter';
 import QuestionTable from '../../../components/questions/QuestionTable';
@@ -47,37 +47,7 @@ export default function QuestionBankPage() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Helper applying filters to an array of questions
-  const applyFilters = (list: Question[]): Question[] => {
-    let result = [...list];
-    if (filters.topicId !== 'ALL') {
-      result = result.filter(
-        (q) =>
-          String(q.topicId) === String(filters.topicId) ||
-          (q.chapter && q.chapter.toLowerCase().includes(String(filters.topicId).toLowerCase())),
-      );
-    }
-    if (filters.bloomLevel !== 'ALL') {
-      result = result.filter((q) => q.bloomLevel === filters.bloomLevel);
-    }
-    if (filters.status !== 'ALL') {
-      result = result.filter((q) => q.status === filters.status);
-    }
-    if (filters.keyword.trim()) {
-      const kw = filters.keyword.toLowerCase().trim();
-      result = result.filter(
-        (q) =>
-          (q.content && q.content.toLowerCase().includes(kw)) ||
-          (q.questionText && q.questionText.toLowerCase().includes(kw)) ||
-          (q.chapter && q.chapter.toLowerCase().includes(kw)) ||
-          (q.topicName && q.topicName.toLowerCase().includes(kw)) ||
-          (q.createdBy && q.createdBy.toLowerCase().includes(kw)),
-      );
-    }
-    return result;
-  };
-
-  // Load questions with graceful fallback
+  // Load questions directly from backend API
   const fetchQuestions = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -88,15 +58,10 @@ export default function QuestionBankPage() {
         status: filters.status !== 'ALL' ? (filters.status as any) : undefined,
         keyword: filters.keyword.trim() || undefined,
       });
-
-      if (Array.isArray(data) && data.length > 0) {
-        setQuestions(data);
-      } else {
-        setQuestions(applyFilters(INITIAL_MOCK_QUESTIONS_ML));
-      }
+      setQuestions(data || []);
     } catch (err: any) {
-      console.warn('Backend questions API offline or unreachable. Using fallback mock questions:', err);
-      setQuestions(applyFilters(INITIAL_MOCK_QUESTIONS_ML));
+      console.error('Error fetching questions from API:', err);
+      setErrorMessage('Không thể tải danh sách câu hỏi từ hệ thống backend.');
     } finally {
       setIsLoading(false);
     }
@@ -106,10 +71,24 @@ export default function QuestionBankPage() {
     fetchQuestions();
   }, [fetchQuestions]);
 
+  // Handler for deleting a question via API
+  const handleDeleteQuestion = async (id: string) => {
+    const confirmed = window.confirm('Bạn có chắc chắn muốn xóa câu hỏi này khỏi ngân hàng đề không?');
+    if (!confirmed) return;
+
+    try {
+      await deleteQuestion(id);
+      addToast('success', 'Đã xóa câu hỏi khỏi ngân hàng đề thành công!');
+      fetchQuestions();
+    } catch (err: any) {
+      addToast('error', 'Có lỗi xảy ra khi xóa câu hỏi: ' + (err?.message || 'Không thể xóa'));
+    }
+  };
+
   // Handler for quick status toggle in table or modal
   const handleStatusChange = async (id: string | number, newStatus: QuestionStatus) => {
     try {
-      await updateQuestionStatus(id, newStatus);
+      await updateQuestionStatus(String(id), newStatus);
     } catch (err: any) {
       console.warn('Backend status update offline, updating local state directly:', err);
     }
@@ -159,16 +138,41 @@ export default function QuestionBankPage() {
             Ngân hàng câu hỏi & Tiêu chí chấm (Rubric)
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Học phần: Triết học Mác – Lênin (Chương 1 & Chương 2) • Thang nhận thức Bloom & Chuẩn Rubric
+            Quản lý câu hỏi thi vấn đáp AI • Môn học: SWD392, PRN231, DBI202 • Chuẩn Bloom & Rubric Criteria
           </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
           <Link
+            to="/lecturer/questions/generate"
+            className="bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2.5 rounded-xl shadow-sm shadow-purple-200 transition-all flex items-center gap-2 text-xs"
+            id="btn-generate-ai"
+            title="Sinh câu hỏi tự động với AI theo Bloom Level và chủ đề môn học"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+            </svg>
+            <span>✨ Sinh câu hỏi AI</span>
+          </Link>
+
+          <Link
+            to="/lecturer/questions/import"
+            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 font-medium px-3.5 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 text-xs"
+            title="Import câu hỏi từ file Excel/CSV/JSON"
+          >
+            <svg className="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Import</span>
+          </Link>
+
+          <Link
             to="/lecturer/questions/rubrics"
-            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 font-medium px-4 py-2.5 rounded-xl shadow-xs hover:shadow-sm transition-all flex items-center gap-2 text-xs"
+            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 font-medium px-3.5 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 text-xs"
             id="btn-manage-rubrics"
-            title="Quản lý tổng quan bảng tiêu chí chấm Rubric"
+            title="Quản lý bảng tiêu chí chấm Rubric"
           >
             <svg
               className="w-4 h-4 text-slate-500"
@@ -183,9 +187,8 @@ export default function QuestionBankPage() {
               <polyline points="14 2 14 8 20 8" />
               <line x1="16" y1="13" x2="8" y2="13" />
               <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
             </svg>
-            <span>Quản lý Rubric</span>
+            <span>Rubric</span>
           </Link>
 
           <Link
@@ -206,17 +209,8 @@ export default function QuestionBankPage() {
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span>+ Tạo câu hỏi mới</span>
+            <span>+ Tạo câu hỏi</span>
           </Link>
-
-          <button
-            type="button"
-            className="bg-white hover:bg-slate-50 text-slate-600 border border-slate-200/80 font-medium px-3.5 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 text-xs"
-            onClick={() => setIsCreateModalOpen(true)}
-            title="Tạo nhanh bằng cửa sổ pop-up"
-          >
-            <span>Tạo nhanh (Modal)</span>
-          </button>
         </div>
       </div>
 
@@ -340,7 +334,7 @@ export default function QuestionBankPage() {
             </div>
             <p className="text-sm font-semibold text-slate-800">Không tìm thấy câu hỏi phù hợp</p>
             <p className="text-xs text-slate-500 max-w-md">
-              Không có câu hỏi nào khớp với tiêu chí tìm kiếm hoặc ngân hàng đề môn Triết học Mác – Lênin hiện đang trống.
+              Không có câu hỏi nào khớp với tiêu chí tìm kiếm hoặc ngân hàng đề môn học hiện đang trống.
             </p>
             <div className="flex items-center gap-2 mt-2">
               <button
@@ -363,6 +357,7 @@ export default function QuestionBankPage() {
             questions={questions}
             onViewRubrics={(q) => setSelectedQuestionForRubrics(q)}
             onStatusChange={handleStatusChange}
+            onDelete={handleDeleteQuestion}
             isLoading={isLoading}
           />
         )}

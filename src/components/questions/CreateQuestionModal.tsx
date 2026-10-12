@@ -24,29 +24,29 @@ export default function CreateQuestionModal({
   onSuccess,
   topics = DEFAULT_TOPICS,
 }: CreateQuestionModalProps) {
-  const [topicId, setTopicId] = useState<string>(topics[0]?.id ? String(topics[0].id) : 'ch-1');
+  const [topicId, setTopicId] = useState<string>(topics[0]?.id ? String(topics[0].id) : '30000000-0000-0000-0000-000000000001');
   const [content, setContent] = useState<string>('');
   const [bloomLevel, setBloomLevel] = useState<BloomLevel>('UNDERSTAND');
-  const [createdBy, setCreatedBy] = useState<string>('TS. Nguyễn Thị Minh');
+  const [createdBy, setCreatedBy] = useState<string>('ThS. Nguyễn Hải Nam');
   const sourceType = 'MANUAL';
 
   // Dynamic Rubric state - Khởi tạo sẵn 2 tiêu chí mẫu có tổng trọng số = 1.00
   const [rubrics, setRubrics] = useState<RubricRowState[]>([
     {
       id: 'row-1',
-      criteriaName: 'Nội dung lý luận cơ bản & chuẩn xác khái niệm',
+      criteriaName: 'Hiểu và giải thích chính xác khái niệm cốt lõi',
       maxScore: 10,
       weightRatio: 0.5,
-      expectedKnowledgePoints: 'Trình bày chính xác định nghĩa, nội dung nguyên lý hoặc quy luật triết học theo giáo trình chuẩn.',
-      description: 'Đạt tối đa khi trình bày đầy đủ định nghĩa và thuật ngữ triết học chính xác.',
+      expectedKnowledgePoints: 'Trình bày chính xác định nghĩa, bản chất kỹ thuật và nguyên lý hoạt động.',
+      description: 'Đạt tối đa khi trình bày đầy đủ, chính xác thuật ngữ chuyên ngành.',
     },
     {
       id: 'row-2',
-      criteriaName: 'Phân tích ý nghĩa phương pháp luận & liên hệ thực tiễn',
+      criteriaName: 'Khả năng phân tích, so sánh và áp dụng thực tế',
       maxScore: 10,
       weightRatio: 0.5,
-      expectedKnowledgePoints: 'Rút ra bài học phương pháp luận đúng đắn, phê phán các quan điểm sai trái, liên hệ thực tiễn.',
-      description: 'Đạt tối đa khi liên hệ được với thực tiễn cách mạng Việt Nam hoặc rèn luyện của bản thân.',
+      expectedKnowledgePoints: 'Đánh giá ưu nhược điểm, liên hệ trường hợp sử dụng cụ thể trong dự án phần mềm.',
+      description: 'Đạt tối đa khi đưa ra ví dụ minh họa và giải pháp giải quyết vấn đề hợp lý.',
     },
   ]);
 
@@ -70,8 +70,8 @@ export default function CreateQuestionModal({
   // Thêm dòng tiêu chí rubric mới
   const handleAddRubric = () => {
     const newId = `row-${Date.now()}`;
-    setRubrics([
-      ...rubrics,
+    setRubrics((prev) => [
+      ...prev,
       {
         id: newId,
         criteriaName: '',
@@ -85,20 +85,25 @@ export default function CreateQuestionModal({
 
   // Xóa dòng rubric
   const handleRemoveRubric = (idToRemove: string) => {
-    if (rubrics.length <= 1) return;
-    setRubrics(rubrics.filter((r) => r.id !== idToRemove));
+    setRubrics((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((r) => r.id !== idToRemove);
+    });
   };
 
-  // Cập nhật giá trị một dòng rubric
+  // Cập nhật giá trị một dòng rubric (hỗ trợ 1 field hoặc object nhiều field)
   const handleRubricChange = (
     id: string,
-    field: keyof Omit<RubricRowState, 'id'>,
-    value: any,
+    fieldOrUpdates: keyof Omit<RubricRowState, 'id'> | Partial<Omit<RubricRowState, 'id'>>,
+    value?: any,
   ) => {
-    setRubrics(
-      rubrics.map((r) => {
+    setRubrics((prev) =>
+      prev.map((r) => {
         if (r.id === id) {
-          return { ...r, [field]: value };
+          if (typeof fieldOrUpdates === 'string') {
+            return { ...r, [fieldOrUpdates]: value };
+          }
+          return { ...r, ...fieldOrUpdates };
         }
         return r;
       }),
@@ -107,16 +112,17 @@ export default function CreateQuestionModal({
 
   // Phân bổ đều trọng số tự động (Auto distribute evenly)
   const handleDistributeWeightsEvenly = () => {
-    if (rubrics.length === 0) return;
-    const count = rubrics.length;
-    const baseWeight = Math.floor((1.0 / count) * 100) / 100;
-    const remainder = Math.round((1.0 - baseWeight * count) * 100) / 100;
+    setRubrics((prev) => {
+      if (prev.length === 0) return prev;
+      const count = prev.length;
+      const baseWeight = Math.floor((1.0 / count) * 100) / 100;
+      const remainder = Math.round((1.0 - baseWeight * count) * 100) / 100;
 
-    const distributed = rubrics.map((r, index) => ({
-      ...r,
-      weightRatio: index === 0 ? Number((baseWeight + remainder).toFixed(2)) : baseWeight,
-    }));
-    setRubrics(distributed);
+      return prev.map((r, index) => ({
+        ...r,
+        weightRatio: index === 0 ? Number((baseWeight + remainder).toFixed(2)) : baseWeight,
+      }));
+    });
   };
 
   // Validation toàn bộ form
@@ -229,7 +235,7 @@ export default function CreateQuestionModal({
               Tạo câu hỏi & Tiêu chí chấm mới
             </h3>
             <span className="text-[11px] font-semibold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded">
-              Triết học Mác – Lênin
+              Ngân hàng câu hỏi AIVIVA
             </span>
           </div>
           <button
@@ -316,7 +322,7 @@ export default function CreateQuestionModal({
               className={`w-full rounded-xl border bg-slate-50/50 p-3 text-sm text-slate-700 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all ${
                 errors.content ? 'border-rose-400' : 'border-slate-200'
               }`}
-              placeholder="Nhập nội dung câu hỏi vấn đáp Triết học Mác – Lênin (VD: Phân tích định nghĩa vật chất của V.I.Lênin và ý nghĩa phương pháp luận...)"
+              placeholder="Nhập nội dung câu hỏi vấn đáp chuyên ngành (VD: Trình bày Dependency Inversion Principle và cách áp dụng trong kiến trúc Clean Architecture...)"
               value={content}
               onChange={(e) => {
                 setContent(e.target.value);
@@ -338,7 +344,7 @@ export default function CreateQuestionModal({
               className="w-full h-10 rounded-xl border border-slate-200 bg-slate-50/50 px-3 text-sm text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               value={createdBy}
               onChange={(e) => setCreatedBy(e.target.value)}
-              placeholder="VD: TS. Nguyễn Thị Minh (Bộ môn Triết học)"
+              placeholder="VD: ThS. Nguyễn Hải Nam (Bộ môn KTPM)"
               disabled={isSubmitting}
             />
           </div>
@@ -497,8 +503,11 @@ export default function CreateQuestionModal({
                         placeholder="Nêu rõ các ý chính thí sinh cần trả lời được để đạt tối đa điểm tiêu chí này..."
                         value={row.expectedKnowledgePoints}
                         onChange={(e) => {
-                          handleRubricChange(row.id, 'expectedKnowledgePoints', e.target.value);
-                          handleRubricChange(row.id, 'description', e.target.value);
+                          const val = e.target.value;
+                          handleRubricChange(row.id, {
+                            expectedKnowledgePoints: val,
+                            description: val,
+                          });
                         }}
                         disabled={isSubmitting}
                       />

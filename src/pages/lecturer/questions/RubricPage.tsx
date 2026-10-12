@@ -28,7 +28,7 @@ export default function RubricPage() {
             Tiêu chuẩn Tiêu chí chấm (Rubric Standards)
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Học phần: Triết học Mác – Lênin • Bảng ma trận tiêu chí đánh giá, kiến thức kỳ vọng và phân bổ trọng số
+            Quản lý chuẩn đánh giá Rubric • Môn học: SWD392, PRN231, DBI202 • Tiêu chí chấm & Kỳ vọng kiến thức AI
           </p>
         </div>
         <div className="flex items-center gap-3">

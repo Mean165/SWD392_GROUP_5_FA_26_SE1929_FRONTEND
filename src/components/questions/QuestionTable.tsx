@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Question, QuestionStatus, BloomLevel } from '../../types/question';
 
 interface QuestionTableProps {
   questions: Question[];
   onViewRubrics: (question: Question) => void;
-  onStatusChange: (id: string | number, newStatus: QuestionStatus) => Promise<void>;
+  onStatusChange: (id: string, newStatus: QuestionStatus) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -12,14 +14,16 @@ export default function QuestionTable({
   questions,
   onViewRubrics,
   onStatusChange,
+  onDelete,
   isLoading = false,
 }: QuestionTableProps) {
-  const [updatingId, setUpdatingId] = useState<string | number | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const handleStatusToggle = async (id: string | number, nextStatus: QuestionStatus) => {
+    const strId = String(id);
     try {
-      setUpdatingId(id);
-      await onStatusChange(id, nextStatus);
+      setUpdatingId(strId);
+      await onStatusChange(strId, nextStatus);
     } finally {
       setUpdatingId(null);
     }
@@ -112,7 +116,7 @@ export default function QuestionTable({
             <th scope="col" className="py-3.5 px-4 font-semibold text-slate-600" style={{ width: '10%' }}>
               Trạng thái
             </th>
-            <th scope="col" className="py-3.5 px-5 font-semibold text-slate-600 text-center" style={{ width: '8%' }}>
+            <th scope="col" className="py-3.5 px-5 font-semibold text-slate-600 text-center" style={{ width: '16%' }}>
               Thao tác
             </th>
           </tr>
@@ -205,39 +209,43 @@ export default function QuestionTable({
                 </td>
 
                 {/* Action Buttons */}
-                <td className="py-4 px-5 align-top text-center whitespace-nowrap">
-                  <div className="flex items-center justify-center gap-1.5">
-                    {question.status !== 'APPROVED' && (
+                <td className="py-4 px-4 align-top text-center whitespace-nowrap">
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <Link
+                      to={`/lecturer/questions/${question.id}`}
+                      className="text-xs font-medium px-2 py-1 rounded-lg border border-blue-200 text-blue-700 bg-blue-50/60 hover:bg-blue-100 transition-all flex items-center gap-1"
+                      title="Xem chi tiết câu hỏi"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      Chi tiết
+                    </Link>
+                    <Link
+                      to={`/lecturer/questions/${question.id}/edit`}
+                      className="text-xs font-medium px-2 py-1 rounded-lg border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-all flex items-center gap-1"
+                      title="Chỉnh sửa câu hỏi & Rubrics"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                      Sửa
+                    </Link>
+                    {onDelete && (
                       <button
                         type="button"
-                        onClick={() => handleStatusToggle(question.id, 'APPROVED')}
+                        onClick={() => onDelete(String(question.id))}
                         disabled={isLoading || isUpdating}
-                        className="text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-all border-emerald-200 text-emerald-700 bg-emerald-50/60 hover:bg-emerald-100 active:scale-95 flex items-center gap-1 disabled:opacity-50 shadow-xs"
-                        title="Duyệt câu hỏi này"
+                        className="text-xs font-medium px-2 py-1 rounded-lg border border-rose-200 text-rose-600 bg-rose-50/40 hover:bg-rose-100 transition-all flex items-center gap-1 disabled:opacity-50"
+                        title="Xóa câu hỏi khỏi ngân hàng"
                       >
-                        ✓ Duyệt
-                      </button>
-                    )}
-                    {question.status !== 'REJECTED' && (
-                      <button
-                        type="button"
-                        onClick={() => handleStatusToggle(question.id, 'REJECTED')}
-                        disabled={isLoading || isUpdating}
-                        className="text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-all border-rose-200 text-rose-700 bg-rose-50/60 hover:bg-rose-100 active:scale-95 flex items-center gap-1 disabled:opacity-50 shadow-xs"
-                        title="Từ chối câu hỏi này"
-                      >
-                        ✕ Từ chối
-                      </button>
-                    )}
-                    {question.status !== 'PENDING' && (
-                      <button
-                        type="button"
-                        onClick={() => handleStatusToggle(question.id, 'PENDING')}
-                        disabled={isLoading || isUpdating}
-                        className="text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-all border-slate-200 text-slate-600 bg-slate-50 hover:bg-slate-100 active:scale-95 flex items-center gap-1 disabled:opacity-50 shadow-xs"
-                        title="Chuyển về trạng thái chờ duyệt"
-                      >
-                        ↺
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                        Xóa
                       </button>
                     )}
                   </div>

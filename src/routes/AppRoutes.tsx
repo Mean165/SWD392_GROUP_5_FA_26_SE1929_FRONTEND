@@ -19,11 +19,12 @@ export default function AppRoutes() {
       </Route>
 
       <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="*" element={<Navigate to="/404" replace />} />
 
       <Route path="/admin/*" element={<AdminRoutes />} />
       <Route path="/lecturer/*" element={<LecturerRoutes />} />
       <Route path="/student/*" element={<StudentRoutes />} />
+
+      <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
   );
 }
