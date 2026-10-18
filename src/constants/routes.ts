@@ -6,6 +6,7 @@ export const APP_ROUTES = {
   admin: {
     dashboard: '/admin/dashboard',
     users: '/admin/users',
+    examSessions: '/admin/exam-sessions',
     subjects: '/admin/subjects',
     subjectAssignments: '/admin/subject-assignments',
     settings: '/admin/settings',

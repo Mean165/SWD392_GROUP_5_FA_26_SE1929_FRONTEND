@@ -52,3 +52,5 @@ export const updateExamSchedule = async (
   void payload;
   return backendUnavailable('Exam schedule');
 };
+
+export * from './examSessionService';

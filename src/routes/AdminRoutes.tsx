@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { ROLES } from '../constants/roles';
 import AdminLayout from '../layouts/AdminLayout';
 import ProtectedRoute from './ProtectedRoute';
-import DashboardPage from '../pages/admin/DashboardPage';
 import UsersPage from '../pages/admin/UsersPage';
 import SubjectsPage from '../pages/admin/SubjectsPage';
 import SubjectAssignmentsPage from '../pages/admin/SubjectAssignmentsPage';
