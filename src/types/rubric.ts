@@ -1,26 +1,17 @@
-import type { RubricCriteria } from './question';
-
-export type { RubricCriteria };
-
 export interface RubricCriterion {
-  id?: number | string;
-  questionId?: string | number;
-  name?: string;
-  criteriaName?: string;
+  id?: number;
+  name: string;
   description?: string;
-  expectedKnowledgePoints?: string;
-  maxScore?: number;
+  maxScore: number;
   weight?: number;
-  weightRatio?: number;
   order?: number;
 }
 
 export interface Rubric {
-  id?: number | string;
-  questionId?: string | number;
-  name?: string;
+  id?: number;
+  name: string;
   description?: string;
-  criteria?: RubricCriterion[] | RubricCriteria[];
+  criteria: RubricCriterion[];
   subjectId?: number;
   createdAt?: string;
 }
