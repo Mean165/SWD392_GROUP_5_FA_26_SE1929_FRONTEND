@@ -81,10 +81,15 @@
 }
 
 .aiviva-navigation {
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   align-content: start;
   flex: 1;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+
+.aiviva-navigation::-webkit-scrollbar {
+  display: none;
 }
 
 .aiviva-sidebar-footer {
@@ -108,7 +113,6 @@
 .aiviva-nav-link:hover {
   color: #fff;
   background: rgb(255 255 255 / 8%);
-  transform: translateX(2px);
 }
 
 .aiviva-nav-link.active {
@@ -181,6 +185,7 @@
 .aiviva-search {
   display: flex;
   width: min(550px, 52vw);
+  min-width: 0;
   height: 44px;
   align-items: center;
   gap: 12px;
@@ -214,7 +219,8 @@
 }
 
 .aiviva-search input {
-  width: 100%;
+  flex: 1 1 auto;
+  width: 0;
   min-width: 0;
   height: 100%;
   border: 0;
@@ -235,11 +241,12 @@
 
 .aiviva-search button {
   display: inline-flex;
-  min-width: 66px;
+  flex: 0 0 auto;
+  min-width: 92px;
   height: 34px;
   align-items: center;
   justify-content: center;
-  padding: 0 17px;
+  padding: 0 14px;
   border: 0;
   border-radius: 8px;
   color: #fff;
@@ -247,6 +254,8 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
   box-shadow: 0 3px 8px rgb(52 120 246 / 24%);
   transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
 }
@@ -460,6 +469,7 @@
   }
 
   .aiviva-search {
+    flex: 1 1 auto;
     width: min(60vw, 380px);
   }
 

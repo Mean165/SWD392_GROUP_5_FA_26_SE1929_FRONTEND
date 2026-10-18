@@ -1,10 +1,13 @@
 import { AuthProvider } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import AppRoutes from './routes/AppRoutes';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </LanguageProvider>
   );
 }

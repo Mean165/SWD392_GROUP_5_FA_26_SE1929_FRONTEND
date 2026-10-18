@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { LanguageProvider } from '../../context/LanguageContext';
 import InterviewPage from './InterviewPage';
 import type { InterviewResponse, InteractionTurnResponse, SubmitAnswerResponse } from '../../types/interview';
 
@@ -70,14 +71,16 @@ const nextTurn: InteractionTurnResponse = {
 };
 
 const renderAttemptRoute = () => render(
-  <MemoryRouter
-    initialEntries={[`/student/interview/${ATTEMPT_ID}`]}
-    future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-  >
-    <Routes>
-      <Route path="/student/interview/:id" element={<InterviewPage />} />
-    </Routes>
-  </MemoryRouter>,
+  <LanguageProvider>
+    <MemoryRouter
+      initialEntries={[`/student/interview/${ATTEMPT_ID}`]}
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
+      <Routes>
+        <Route path="/student/interview/:id" element={<InterviewPage />} />
+      </Routes>
+    </MemoryRouter>
+  </LanguageProvider>,
 );
 
 afterEach(() => {
@@ -125,14 +128,16 @@ describe('InterviewPage', () => {
   it('starts or resumes from the sessionId route, not a fabricated attempt id', async () => {
     interviewMocks.startInterview.mockResolvedValue(makeInterview());
     render(
-      <MemoryRouter
-        initialEntries={['/student/exams/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/room']}
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
-        <Routes>
-          <Route path="/student/exams/:id/room" element={<InterviewPage />} />
-        </Routes>
-      </MemoryRouter>,
+      <LanguageProvider>
+        <MemoryRouter
+          initialEntries={['/student/exams/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/room']}
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
+          <Routes>
+            <Route path="/student/exams/:id/room" element={<InterviewPage />} />
+          </Routes>
+        </MemoryRouter>
+      </LanguageProvider>,
     );
 
     expect(await screen.findByText('Câu hỏi từ máy chủ ban đầu')).toBeInTheDocument();

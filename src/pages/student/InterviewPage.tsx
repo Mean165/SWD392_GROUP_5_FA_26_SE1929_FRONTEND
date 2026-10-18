@@ -10,6 +10,7 @@ import {
   submitAnswer,
 } from '../../services/interview/interviewService';
 import type { InterviewResponse, InteractionTurnResponse } from '../../types/interview';
+import { useLanguage } from '../../context/LanguageContext';
 import { StudentPageHeader } from './StudentPages';
 import './InterviewPage.css';
 
@@ -21,6 +22,7 @@ interface RecordedAnswer {
 }
 
 export default function InterviewPage() {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const isSessionRoute = /\/student\/exams\/[^/]+\/room\/?$/.test(location.pathname);
@@ -38,7 +40,7 @@ export default function InterviewPage() {
 
   const loadAttempt = async (signal?: AbortSignal) => {
     if (!id || !UUID_PATTERN.test(id)) {
-      throw new Error('Mã phiên thi không hợp lệ.');
+      throw new Error(t('Mã phiên thi không hợp lệ.'));
     }
     return isSessionRoute ? startInterview(id, signal) : getInterview(id, signal);
   };
@@ -86,7 +88,7 @@ export default function InterviewPage() {
   const handleSubmit = async () => {
     if (submitLockRef.current === location.pathname || isSubmitting || !attempt || !currentTurn) return;
     if (!recordedAnswer || recordedAnswer.turnId !== currentTurn.turnId) {
-      setSubmitError('Hãy tạo bản ghi hợp lệ cho câu hỏi hiện tại trước khi gửi.');
+      setSubmitError(t('Hãy tạo bản ghi hợp lệ cho câu hỏi hiện tại trước khi gửi.'));
       return;
     }
 
@@ -105,7 +107,7 @@ export default function InterviewPage() {
       });
       if (routeKeyRef.current !== submitRoute) return;
       if (response.turnId !== submitTurnId) {
-        setLoadError('Máy chủ trả về lượt thi không khớp. Hãy tải lại trạng thái phiên thi trước khi tiếp tục.');
+        setLoadError(t('Máy chủ trả về lượt thi không khớp. Hãy tải lại trạng thái phiên thi trước khi tiếp tục.'));
         return;
       }
 
@@ -127,7 +129,7 @@ export default function InterviewPage() {
           setCompleted(refreshed.status === 'COMPLETED');
         } catch {
           if (routeKeyRef.current === submitRoute) {
-            setLoadError('Câu trả lời đã được máy chủ xác nhận, nhưng không tải được lượt tiếp theo. Tải lại trạng thái phiên thi để tiếp tục.');
+            setLoadError(t('Câu trả lời đã được máy chủ xác nhận, nhưng không tải được lượt tiếp theo. Tải lại trạng thái phiên thi để tiếp tục.'));
           }
         }
       }
@@ -161,44 +163,44 @@ export default function InterviewPage() {
     }
   };
 
-  const title = isSessionRoute ? 'Phòng thi vấn đáp AI' : 'Phiên thi vấn đáp AI';
+  const title = t(isSessionRoute ? 'Phòng thi vấn đáp AI' : 'Phiên thi vấn đáp AI');
 
   return (
     <div className="student-page">
       <StudentPageHeader
         title={title}
-        description={id ? `Phiên thi ${id}` : 'Không tìm thấy mã phiên thi.'}
+        description={id ? `${t('Phiên thi')} ${id}` : t('Không tìm thấy mã phiên thi.')}
         action={{ label: 'Quay lại lịch thi', to: APP_ROUTES.student.exams }}
       />
 
-      {loading && <p className="interview-page-status" role="status">Đang tải trạng thái phiên thi…</p>}
+      {loading && <p className="interview-page-status" role="status">{t('Đang tải trạng thái phiên thi…')}</p>}
 
       {!loading && loadError && (
         <section className="interview-state-card" role="alert">
-          <p>{loadError}</p>
+          <p>{t(loadError)}</p>
           {recordedAnswer && (
-            <p>Bản ghi vẫn được giữ trong trang này và chưa được tự gửi lại.</p>
+            <p>{t('Bản ghi vẫn được giữ trong trang này và chưa được tự gửi lại.')}</p>
           )}
           {confirmedTranscript !== null && (
             <div className="interview-transcript">
-              <h3>Phiên âm đã được máy chủ xác nhận</h3>
-              <p>{confirmedTranscript || 'Máy chủ không trả về nội dung phiên âm.'}</p>
+              <h3>{t('Phiên âm đã được máy chủ xác nhận')}</h3>
+              <p>{confirmedTranscript || t('Máy chủ không trả về nội dung phiên âm.')}</p>
             </div>
           )}
           <button type="button" className="student-primary-button" onClick={reloadAttempt}>
-            Tải lại trạng thái phiên thi
+            {t('Tải lại trạng thái phiên thi')}
           </button>
         </section>
       )}
 
       {!loading && !loadError && completed && (
         <section className="interview-state-card interview-completed" role="status">
-          <h2>Phiên thi đã hoàn tất</h2>
-          <p>Máy chủ đã xác nhận trạng thái hoàn tất của phiên thi này.</p>
+          <h2>{t('Phiên thi đã hoàn tất')}</h2>
+          <p>{t('Máy chủ đã xác nhận trạng thái hoàn tất của phiên thi này.')}</p>
           {confirmedTranscript !== null && (
             <div className="interview-transcript">
-              <h3>Phiên âm đã được máy chủ xác nhận</h3>
-              <p>{confirmedTranscript || 'Máy chủ không trả về nội dung phiên âm.'}</p>
+              <h3>{t('Phiên âm đã được máy chủ xác nhận')}</h3>
+              <p>{confirmedTranscript || t('Máy chủ không trả về nội dung phiên âm.')}</p>
             </div>
           )}
         </section>
@@ -222,16 +224,16 @@ export default function InterviewPage() {
 
       {!loading && !loadError && !completed && attempt && !currentTurn && (
         <section className="interview-state-card" role="status">
-          <h2>Chưa có câu hỏi hiện tại</h2>
-          <p>Máy chủ chưa cung cấp lượt hỏi có thể trả lời. Hãy tải lại trạng thái phiên thi hoặc liên hệ hỗ trợ.</p>
+          <h2>{t('Chưa có câu hỏi hiện tại')}</h2>
+          <p>{t('Máy chủ chưa cung cấp lượt hỏi có thể trả lời. Hãy tải lại trạng thái phiên thi hoặc liên hệ hỗ trợ.')}</p>
           <button type="button" className="student-primary-button" onClick={reloadAttempt}>
-            Tải lại trạng thái phiên thi
+            {t('Tải lại trạng thái phiên thi')}
           </button>
         </section>
       )}
 
       <p className="interview-support-link">
-        <Link to={APP_ROUTES.student.help}>Cần trợ giúp về micro hoặc kết nối?</Link>
+        <Link to={APP_ROUTES.student.help}>{t('Cần trợ giúp về micro hoặc kết nối?')}</Link>
       </p>
     </div>
   );

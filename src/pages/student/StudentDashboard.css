@@ -12,6 +12,238 @@
   padding: 6px 4px;
 }
 
+.exam-schedule-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.exam-schedule-home-link {
+  color: #3474ee;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.exam-schedule-mock-label {
+  width: fit-content;
+  margin: -10px 0 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: #815d0c;
+  background: #fff2c7;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.exam-schedule-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #e3eaf5;
+  border-radius: 10px;
+  background: white;
+}
+
+.exam-schedule-filters label {
+  display: grid;
+  min-width: 160px;
+  flex: 1 1 160px;
+  gap: 6px;
+  color: #53627d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.exam-schedule-filters input,
+.exam-schedule-filters select {
+  min-height: 38px;
+  padding: 0 9px;
+  border: 1px solid #dce4f0;
+  border-radius: 7px;
+  color: #30466c;
+  background: white;
+  font: inherit;
+}
+
+.exam-assignment-list,
+.student-history-list {
+  display: grid;
+  gap: 14px;
+}
+
+.exam-assignment-card,
+.student-history-item {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #e3eaf5;
+  border-radius: 11px;
+  background: white;
+  box-shadow: 0 4px 14px rgba(35, 68, 124, .035);
+}
+
+.exam-assignment-card.cancelled {
+  opacity: .63;
+  filter: grayscale(.45);
+}
+
+.exam-assignment-heading,
+.student-history-item,
+.exam-assignment-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.exam-assignment-heading h2,
+.student-history-item h2 {
+  margin: 0;
+  color: #2c4264;
+  font-size: 16px;
+}
+
+.exam-assignment-heading p,
+.student-history-item p {
+  margin: 5px 0 0;
+  color: #73819a;
+  font-size: 12px;
+}
+
+.exam-assignment-status,
+.student-history-item > span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #315f9d;
+  background: #edf4ff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.exam-assignment-status.completed {
+  color: #247144;
+  background: #eaf7ef;
+}
+
+.exam-assignment-status.in_progress {
+  color: #815d0c;
+  background: #fff5da;
+}
+
+.exam-assignment-status.cancelled {
+  color: #6a6f7a;
+  background: #eceef2;
+}
+
+.exam-assignment-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 0;
+}
+
+.exam-assignment-details div {
+  display: grid;
+  gap: 4px;
+}
+
+.exam-assignment-details dt {
+  color: #7a879d;
+  font-size: 11px;
+}
+
+.exam-assignment-details dd {
+  margin: 0;
+  color: #435572;
+  font-size: 13px;
+}
+
+.exam-assignment-entry {
+  justify-content: flex-start;
+  padding-top: 13px;
+  border-top: 1px solid #edf0f6;
+}
+
+.exam-assignment-entry > div {
+  min-width: 200px;
+  flex: 1;
+}
+
+.exam-assignment-entry p,
+.exam-entry-reason {
+  margin: 0;
+  color: #687791;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.exam-assignment-entry > a:not(.student-primary-button) {
+  color: #3474ee;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.exam-assignment-card .student-primary-button {
+  border: 0;
+  cursor: pointer;
+}
+
+.exam-assignment-card .student-primary-button:disabled,
+.exam-schedule-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.exam-schedule-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #64738e;
+  font-size: 13px;
+}
+
+.exam-schedule-pagination button,
+.exam-schedule-retry {
+  min-height: 34px;
+  padding: 5px 12px;
+  border: 1px solid #dbe4f2;
+  border-radius: 7px;
+  color: #315f9d;
+  background: white;
+  cursor: pointer;
+}
+
+.exam-schedule-retry {
+  margin-left: 5px;
+}
+
+.student-history-item {
+  min-height: 70px;
+}
+
+.student-history-item > span {
+  color: #247144;
+  background: #eaf7ef;
+}
+
+.exam-schedule-page a:focus-visible,
+.exam-schedule-page button:focus-visible,
+.exam-schedule-page input:focus-visible,
+.exam-schedule-page select:focus-visible {
+  outline: 3px solid #6c9cff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .exam-assignment-entry > div {
+    flex-basis: 100%;
+  }
+}
+
 .student-page-heading {
   display: flex;
   align-items: center;
@@ -222,6 +454,12 @@
   border-bottom: 0;
 }
 
+.student-settings-list > .aiviva-language-settings {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  gap: 18px;
+}
+
 .student-setting-icon {
   display: grid;
   width: 38px;
@@ -231,6 +469,23 @@
   border-radius: 11px;
   color: #3474ee;
   background: #edf3ff;
+}
+
+.student-setting-icon-svg {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.student-settings-copy {
+  min-width: 0;
+}
+
+.student-settings-row {
+  display: flex;
 }
 
 .student-settings-list strong,

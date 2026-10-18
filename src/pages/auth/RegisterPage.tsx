@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register } from '../../services/auth/authService';
+import { useLanguage } from '../../context/LanguageContext';
 import './RegisterPage.css';
 
 /**
@@ -9,6 +10,7 @@ import './RegisterPage.css';
  */
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // State quản lý giá trị các trường nhập liệu
   const [fullName, setFullName] = useState('');
@@ -103,7 +105,7 @@ export default function RegisterPage() {
           </svg>
         </div>
         <h1 className="register-title">AI Oral Examination</h1>
-        <p className="register-subtitle">Đăng ký tài khoản tham gia thi vấn đáp trực tuyến</p>
+        <p className="register-subtitle">{t('Đăng ký tài khoản tham gia thi vấn đáp trực tuyến')}</p>
       </div>
 
       {/* Hiển thị thông báo lỗi nếu có */}
@@ -124,7 +126,7 @@ export default function RegisterPage() {
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <span>{errorMessage}</span>
+          <span>{t(errorMessage)}</span>
         </div>
       )}
 
@@ -145,7 +147,7 @@ export default function RegisterPage() {
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
-          <span>{successMessage}</span>
+          <span>{t(successMessage)}</span>
         </div>
       )}
 
@@ -154,7 +156,7 @@ export default function RegisterPage() {
         {/* Ô nhập Họ và tên */}
         <div className="form-group">
           <label htmlFor="fullName" className="form-label">
-            Họ và tên
+            {t('Họ và tên')}
           </label>
           <input
             id="fullName"
@@ -190,14 +192,14 @@ export default function RegisterPage() {
         {/* Ô nhập Mật khẩu kèm nút ẩn/hiện mật khẩu */}
         <div className="form-group">
           <label htmlFor="password" className="form-label">
-            Mật khẩu
+            {t('Mật khẩu')}
           </label>
           <div className="password-input-wrapper">
             <input
               id="password"
               type={showPassword ? 'text' : 'password'}
               className="form-input password-input"
-              placeholder="Nhập mật khẩu (tối thiểu 6 kí tự)"
+              placeholder={t('Nhập mật khẩu (tối thiểu 6 kí tự)')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -209,8 +211,8 @@ export default function RegisterPage() {
               className="toggle-password-btn"
               onClick={() => setShowPassword((prev) => !prev)}
               disabled={isLoading}
-              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-label={t(showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu')}
+              title={t(showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu')}
             >
               {showPassword ? (
                 /* Icon ẩn mật khẩu (mắt gạch chéo) */
@@ -250,13 +252,13 @@ export default function RegisterPage() {
         {/* Ô nhập Xác nhận mật khẩu */}
         <div className="form-group">
           <label htmlFor="confirmPassword" className="form-label">
-            Xác nhận mật khẩu
+            {t('Xác nhận mật khẩu')}
           </label>
           <input
             id="confirmPassword"
             type="password"
             className="form-input"
-            placeholder="Nhập lại mật khẩu"
+            placeholder={t('Nhập lại mật khẩu')}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             disabled={isLoading}
@@ -268,13 +270,13 @@ export default function RegisterPage() {
         {/* Tùy chọn liên kết: Đã có tài khoản? Đăng nhập ngay */}
         <div className="login-link-row">
           <Link to="/login" className="login-link">
-            Đã có tài khoản? Đăng nhập ngay
+            {t('Đã có tài khoản? Đăng nhập ngay')}
           </Link>
         </div>
 
         {/* Nút Submit lớn màu xanh dương */}
         <button type="submit" className="register-submit-btn" disabled={isLoading}>
-          {isLoading ? 'Đang đăng ký...' : 'Register'}
+          {isLoading ? t('Đang đăng ký...') : t('Đăng ký')}
         </button>
       </form>
     </div>

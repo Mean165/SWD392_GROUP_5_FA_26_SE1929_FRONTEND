@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { getTurnSpeech, getInterviewErrorMessage } from '../../services/interview/interviewService';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface AudioPlayerProps {
   turnId: string;
@@ -8,6 +9,7 @@ interface AudioPlayerProps {
 type PlaybackStatus = 'loading' | 'ready' | 'playing' | 'paused' | 'error';
 
 export default function AudioPlayer({ turnId }: AudioPlayerProps) {
+  const { t } = useLanguage();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<PlaybackStatus>('loading');
@@ -60,7 +62,7 @@ export default function AudioPlayer({ turnId }: AudioPlayerProps) {
       await audio.play();
       setErrorMessage(null);
     } catch {
-      setErrorMessage('Trình duyệt chưa cho phép phát âm thanh. Hãy nhấn nút phát để thử lại.');
+      setErrorMessage(t('Trình duyệt chưa cho phép phát âm thanh. Hãy nhấn nút phát để thử lại.'));
       setStatus('ready');
     }
   };
@@ -73,7 +75,7 @@ export default function AudioPlayer({ turnId }: AudioPlayerProps) {
   };
 
   return (
-    <div className="interview-audio-player" aria-label="Âm thanh câu hỏi">
+    <div className="interview-audio-player" aria-label={t('Âm thanh câu hỏi')}>
       <audio
         ref={audioRef}
         src={audioUrl ?? undefined}
@@ -83,34 +85,34 @@ export default function AudioPlayer({ turnId }: AudioPlayerProps) {
         onEnded={() => setStatus('ready')}
         onError={() => {
           setStatus('error');
-          setErrorMessage('Không thể phát âm thanh câu hỏi. Hãy tải lại để thử lại.');
+          setErrorMessage(t('Không thể phát âm thanh câu hỏi. Hãy tải lại để thử lại.'));
         }}
       />
       {status === 'loading' ? (
-        <button type="button" className="interview-secondary-button" disabled aria-label="Đang tải âm thanh câu hỏi">
-          Đang tải âm thanh…
+        <button type="button" className="interview-secondary-button" disabled aria-label={t('Đang tải âm thanh câu hỏi')}>
+          {t('Đang tải âm thanh…')}
         </button>
       ) : status === 'error' ? (
         <button type="button" className="interview-secondary-button" onClick={retryLoad}>
-          Tải lại âm thanh câu hỏi
+          {t('Tải lại âm thanh câu hỏi')}
         </button>
       ) : (
         <button
           type="button"
           className="interview-secondary-button"
           onClick={togglePlayback}
-          aria-label={status === 'playing' ? 'Tạm dừng câu hỏi' : 'Phát câu hỏi'}
+          aria-label={t(status === 'playing' ? 'Tạm dừng câu hỏi' : 'Phát câu hỏi')}
         >
-          {status === 'playing' ? 'Tạm dừng câu hỏi' : status === 'paused' ? 'Phát lại câu hỏi' : 'Phát câu hỏi'}
+          {t(status === 'playing' ? 'Tạm dừng câu hỏi' : status === 'paused' ? 'Phát lại câu hỏi' : 'Phát câu hỏi')}
         </button>
       )}
       <span className="interview-audio-status" role="status" aria-live="polite">
-        {status === 'loading' && 'Đang tải giọng đọc câu hỏi.'}
-        {status === 'playing' && 'Đang phát câu hỏi.'}
-        {status === 'paused' && 'Đã tạm dừng câu hỏi.'}
-        {status === 'ready' && 'Âm thanh câu hỏi đã sẵn sàng.'}
+        {status === 'loading' && t('Đang tải giọng đọc câu hỏi.')}
+        {status === 'playing' && t('Đang phát câu hỏi.')}
+        {status === 'paused' && t('Đã tạm dừng câu hỏi.')}
+        {status === 'ready' && t('Âm thanh câu hỏi đã sẵn sàng.')}
       </span>
-      {errorMessage && <p className="interview-error" role="alert">{errorMessage}</p>}
+      {errorMessage && <p className="interview-error" role="alert">{t(errorMessage)}</p>}
     </div>
   );
 }

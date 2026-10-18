@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { APP_ROUTES } from '../constants/routes';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSelector from '../components/common/LanguageSelector';
 import './RoleLayout.css';
 
 export type RoleNavigationItem = {
@@ -44,6 +46,7 @@ type RoleLayoutProps = {
 
 export default function RoleLayout({ role, roleLabel, navigation }: RoleLayoutProps) {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -83,8 +86,8 @@ export default function RoleLayout({ role, roleLabel, navigation }: RoleLayoutPr
           </span>
         </Link>
 
-        <div className="aiviva-sidebar-caption">MENU</div>
-        <nav className="aiviva-navigation" aria-label={`Điều hướng ${roleLabel}`}>
+        <div className="aiviva-sidebar-caption">{t('MENU')}</div>
+        <nav className="aiviva-navigation" aria-label={`${t('Điều hướng')} ${t(roleLabel)}`}>
           {navigation.map((item) => (
             <NavLink
               key={item.to}
@@ -93,7 +96,7 @@ export default function RoleLayout({ role, roleLabel, navigation }: RoleLayoutPr
               className={({ isActive }) => `aiviva-nav-link${isActive ? ' active' : ''}`}
             >
               <span className="aiviva-nav-icon"><RoleIcon name={item.icon} /></span>
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
             </NavLink>
           ))}
         </nav>
@@ -102,13 +105,13 @@ export default function RoleLayout({ role, roleLabel, navigation }: RoleLayoutPr
           {!navigation.some((item) => item.to === settingsPath) && (
             <NavLink to={settingsPath} className={({ isActive }) => `aiviva-nav-link${isActive ? ' active' : ''}`}>
               <span className="aiviva-nav-icon"><RoleIcon name="settings" /></span>
-              <span>Cài đặt</span>
+              <span>{t('Cài đặt')}</span>
             </NavLink>
           )}
           {role === 'student' && (
             <NavLink to="/student/help" className={({ isActive }) => `aiviva-nav-link${isActive ? ' active' : ''}`}>
               <span className="aiviva-nav-icon"><RoleIcon name="help" /></span>
-              <span>Trợ giúp</span>
+              <span>{t('Trợ giúp')}</span>
             </NavLink>
           )}
         </div>
@@ -128,20 +131,21 @@ export default function RoleLayout({ role, roleLabel, navigation }: RoleLayoutPr
                 type="search"
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
-                placeholder="Tìm kỳ thi trong lịch của tôi..."
-                aria-label="Tìm kỳ thi trong lịch của tôi"
+                placeholder={t('Tìm kỳ thi trong lịch của tôi...')}
+                aria-label={t('Tìm kỳ thi trong lịch của tôi')}
               />
-              <button type="submit">Tìm kiếm</button>
+              <button type="submit">{t('Tìm kiếm')}</button>
             </form>
           ) : (
             <div className="aiviva-page-context">
-              <span className="aiviva-context-overline">{roleLabel}</span>
-              <strong>{activePage?.label || roleLabel}</strong>
+              <span className="aiviva-context-overline">{t(roleLabel)}</span>
+              <strong>{t(activePage?.label || roleLabel)}</strong>
             </div>
           )}
           <div className="aiviva-topbar-actions">
+            <LanguageSelector compact />
             {role === 'student' && (
-              <Link className="aiviva-notification-link" to={APP_ROUTES.student.notifications} aria-label="Thông báo">
+              <Link className="aiviva-notification-link" to={APP_ROUTES.student.notifications} aria-label={t('Thông báo')}>
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
                   <path d="M10 21h4" />
@@ -158,7 +162,7 @@ export default function RoleLayout({ role, roleLabel, navigation }: RoleLayoutPr
                 <span className="aiviva-avatar">{displayName.charAt(0).toLocaleUpperCase()}</span>
                 <span className="aiviva-profile-copy">
                   <strong>{displayName}</strong>
-                  <small>{roleLabel}</small>
+                  <small>{t(roleLabel)}</small>
                 </span>
                 <span className={`aiviva-profile-chevron${profileMenuOpen ? ' open' : ''}`} aria-hidden="true">
                   <svg viewBox="0 0 20 20" fill="none">
@@ -168,10 +172,10 @@ export default function RoleLayout({ role, roleLabel, navigation }: RoleLayoutPr
               </button>
               {profileMenuOpen && (
                 <div className="aiviva-profile-menu">
-                  <Link to={profilePath} onClick={() => setProfileMenuOpen(false)}>Hồ sơ cá nhân</Link>
-                  <Link to={settingsPath} onClick={() => setProfileMenuOpen(false)}>Cài đặt</Link>
-                  {role === 'student' && <Link to="/student/help" onClick={() => setProfileMenuOpen(false)}>Trợ giúp</Link>}
-                  <button type="button" onClick={handleLogout}>Đăng xuất</button>
+                  <Link to={profilePath} onClick={() => setProfileMenuOpen(false)}>{t('Hồ sơ cá nhân')}</Link>
+                  <Link to={settingsPath} onClick={() => setProfileMenuOpen(false)}>{t('Cài đặt')}</Link>
+                  {role === 'student' && <Link to="/student/help" onClick={() => setProfileMenuOpen(false)}>{t('Trợ giúp')}</Link>}
+                  <button type="button" onClick={handleLogout}>{t('Đăng xuất')}</button>
                 </div>
               )}
             </div>

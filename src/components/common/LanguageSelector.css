@@ -1,0 +1,179 @@
+.aiviva-language-selector {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aiviva-language-selector.compact {
+  gap: 0;
+}
+
+.aiviva-language-trigger {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid #e1e8f2;
+  border-radius: 11px;
+  color: #3b4f6d;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.aiviva-language-trigger:hover,
+.aiviva-language-selector.open .aiviva-language-trigger {
+  border-color: #b8ccf8;
+  background: #fbfcff;
+}
+
+.aiviva-language-icon {
+  display: inline-flex;
+  align-items: center;
+  color: #657693;
+  font-size: 15px;
+}
+
+.aiviva-language-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.aiviva-language-selector.compact .aiviva-language-trigger {
+  width: 48px;
+  min-height: 40px;
+  padding: 0;
+  gap: 3px;
+}
+
+.aiviva-language-selector.compact .aiviva-language-icon {
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.aiviva-language-chevron {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  transition: transform .16s ease;
+}
+
+.aiviva-language-selector.open .aiviva-language-chevron {
+  transform: rotate(180deg);
+}
+
+.aiviva-language-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 176px;
+  padding: 5px;
+  border: 1px solid #e6ebf3;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(28 48 83 / 16%), 0 2px 6px rgb(28 48 83 / 5%);
+  animation: language-menu-in .14s ease-out;
+}
+
+.aiviva-language-menu > button {
+  display: flex;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 8px;
+  color: #42536d;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.aiviva-language-menu > button:hover,
+.aiviva-language-menu > button:focus-visible {
+  outline: 0;
+  background: #f3f6fc;
+}
+
+.aiviva-language-menu > button.selected {
+  color: #225fc8;
+  background: #eef4ff;
+  font-weight: 600;
+}
+
+.aiviva-language-check {
+  color: #2868db;
+  font-size: 14px;
+}
+
+@keyframes language-menu-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.aiviva-language-trigger:focus-visible {
+  outline: 0;
+  border-color: #8cb1fa;
+  box-shadow: 0 0 0 3px rgb(52 120 246 / 12%);
+}
+
+.aiviva-language-settings {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+}
+
+.aiviva-language-settings-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.aiviva-language-settings-copy strong {
+  color: #314665;
+  font-size: 13px;
+}
+
+.aiviva-language-settings-copy small {
+  color: #7987a0;
+  font-size: 12px;
+}
+
+.aiviva-language-setting-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+@media (max-width: 650px) {
+  .aiviva-language-selector.compact {
+    width: 42px;
+  }
+
+  .aiviva-topbar-actions {
+    gap: 8px;
+  }
+}

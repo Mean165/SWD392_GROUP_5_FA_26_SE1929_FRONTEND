@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { blobToAudioDataUrl, selectSupportedAudioMimeType } from '../../utils/interviewAudio';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface AnswerRecorderProps {
   recordingAvailable: boolean;
@@ -39,6 +40,7 @@ export default function AnswerRecorder({
   onSubmit,
   onDiscard,
 }: AnswerRecorderProps) {
+  const { t } = useLanguage();
   const [isRecording, setIsRecording] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -225,13 +227,13 @@ export default function AnswerRecorder({
           <>
             <span className="interview-recording-status" role="status">
               <span className="interview-recording-indicator" aria-hidden="true" />
-              Đang ghi âm · {formatDuration(duration)}
+              {t('Đang ghi âm')} · {formatDuration(duration)}
             </span>
             <button type="button" className="student-primary-button" onClick={stopRecording}>
-              Dừng ghi âm
+              {t('Dừng ghi âm')}
             </button>
             <button type="button" className="interview-secondary-button" onClick={cancelRecording}>
-              Hủy bản ghi
+              {t('Hủy bản ghi')}
             </button>
           </>
         ) : (
@@ -241,21 +243,21 @@ export default function AnswerRecorder({
             onClick={startRecording}
             disabled={isSubmitting || recordingAvailable || isStarting}
           >
-            {isStarting ? 'Đang chờ quyền micro…' : recordingAvailable ? 'Đã có bản ghi' : 'Bắt đầu ghi âm'}
+            {t(isStarting ? 'Đang chờ quyền micro…' : recordingAvailable ? 'Đã có bản ghi' : 'Bắt đầu ghi âm')}
           </button>
         )}
       </div>
 
       {recordingAvailable && (
         <div className="interview-recording-ready" role="status">
-          Bản ghi đã sẵn sàng để gửi.
+          {t('Bản ghi đã sẵn sàng để gửi.')}
           <button type="button" className="interview-text-button" onClick={onDiscard} disabled={isSubmitting}>
-            Xóa bản ghi
+            {t('Xóa bản ghi')}
           </button>
         </div>
       )}
-      {recordingError && <p className="interview-error" role="alert">{recordingError}</p>}
-      {submitError && <p className="interview-error" role="alert">{submitError}</p>}
+      {recordingError && <p className="interview-error" role="alert">{t(recordingError)}</p>}
+      {submitError && <p className="interview-error" role="alert">{t(submitError)}</p>}
 
       <button
         type="button"
@@ -263,10 +265,10 @@ export default function AnswerRecorder({
         onClick={onSubmit}
         disabled={!recordingAvailable || isSubmitting || isRecording}
       >
-        {isSubmitting ? 'Đang gửi và xử lý câu trả lời…' : 'Gửi câu trả lời'}
+        {t(isSubmitting ? 'Đang gửi và xử lý câu trả lời…' : 'Gửi câu trả lời')}
       </button>
       <p className="interview-processing-status" role="status" aria-live="polite">
-        {isSubmitting ? 'Đang gửi và xử lý câu trả lời. Quá trình phiên âm diễn ra đồng bộ trên máy chủ.' : ''}
+        {isSubmitting ? t('Đang gửi và xử lý câu trả lời. Quá trình phiên âm diễn ra đồng bộ trên máy chủ.') : ''}
       </p>
     </section>
   );

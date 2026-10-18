@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { LanguageProvider } from '../../context/LanguageContext';
 import AnswerRecorder from './AnswerRecorder';
 
 class FakeMediaRecorder {
@@ -40,6 +41,10 @@ const baseProps = {
   onDiscard: vi.fn(),
 };
 
+const renderRecorder = (props = baseProps) => render(
+  <LanguageProvider><AnswerRecorder {...props} /></LanguageProvider>,
+);
+
 let stopTrack: ReturnType<typeof vi.fn>;
 let getUserMedia: ReturnType<typeof vi.fn>;
 
@@ -65,7 +70,7 @@ afterEach(() => {
 
 describe('AnswerRecorder', () => {
   it('asks for microphone permission on user action and uses a supported backend MIME type', async () => {
-    render(<AnswerRecorder {...baseProps} />);
+    renderRecorder();
     fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu ghi âm' }));
     await waitFor(() => expect(FakeMediaRecorder.instances).toHaveLength(1));
     expect(getUserMedia).toHaveBeenCalledWith({ audio: true });
@@ -78,7 +83,7 @@ describe('AnswerRecorder', () => {
     getUserMedia.mockImplementationOnce(() => new Promise((resolve) => {
       resolveStream = resolve;
     }));
-    render(<AnswerRecorder {...baseProps} />);
+    renderRecorder();
     const startButton = screen.getByRole('button', { name: 'Bắt đầu ghi âm' });
     fireEvent.click(startButton);
     fireEvent.click(startButton);
@@ -91,7 +96,7 @@ describe('AnswerRecorder', () => {
 
   it('converts a completed recording to a data URL and releases microphone tracks', async () => {
     const onRecordingReady = vi.fn();
-    render(<AnswerRecorder {...baseProps} onRecordingReady={onRecordingReady} />);
+    renderRecorder({ ...baseProps, onRecordingReady });
     fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu ghi âm' }));
     await waitFor(() => expect(FakeMediaRecorder.instances).toHaveLength(1));
     fireEvent.click(screen.getByRole('button', { name: 'Dừng ghi âm' }));
@@ -102,7 +107,7 @@ describe('AnswerRecorder', () => {
 
   it('does not provide an empty recording for submission', async () => {
     const onRecordingReady = vi.fn();
-    render(<AnswerRecorder {...baseProps} onRecordingReady={onRecordingReady} />);
+    renderRecorder({ ...baseProps, onRecordingReady });
     fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu ghi âm' }));
     await waitFor(() => expect(FakeMediaRecorder.instances).toHaveLength(1));
     FakeMediaRecorder.instances[0].emitAudio = false;
@@ -115,7 +120,7 @@ describe('AnswerRecorder', () => {
 
   it('reports denied microphone permission and frees tracks on unmount', async () => {
     getUserMedia.mockRejectedValueOnce(new DOMException('denied', 'NotAllowedError'));
-    const { unmount } = render(<AnswerRecorder {...baseProps} />);
+    const { unmount } = renderRecorder();
     fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu ghi âm' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('chưa cấp quyền micro');
 
@@ -128,7 +133,7 @@ describe('AnswerRecorder', () => {
 
   it('does not request a microphone if no accepted recorder format is supported', async () => {
     FakeMediaRecorder.supportedMimeTypes = [];
-    render(<AnswerRecorder {...baseProps} />);
+    renderRecorder();
     fireEvent.click(screen.getByRole('button', { name: 'Bắt đầu ghi âm' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('không hỗ trợ định dạng âm thanh');
     expect(getUserMedia).not.toHaveBeenCalled();

@@ -1,0 +1,17 @@
+.auth-layout {
+  position: relative;
+}
+
+.auth-language-selector {
+  position: absolute;
+  z-index: 1;
+  top: 20px;
+  right: 24px;
+}
+
+@media (max-width: 600px) {
+  .auth-language-selector {
+    top: 12px;
+    right: 12px;
+  }
+}

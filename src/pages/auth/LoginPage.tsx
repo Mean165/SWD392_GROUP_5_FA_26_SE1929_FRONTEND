@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useLanguage } from '../../context/LanguageContext';
 import './LoginPage.css';
 
 /**
@@ -52,6 +53,7 @@ function extractErrorMessage(error: any): string {
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useLanguage();
 
   // State quản lý thông tin đăng nhập
   const [email, setEmail] = useState('');
@@ -112,7 +114,7 @@ export default function LoginPage() {
           </svg>
         </div>
         <h1 className="login-title">AI Oral Examination</h1>
-        <p className="login-subtitle">Hệ thống thi vấn đáp trực tuyến hỗ trợ bởi AI</p>
+        <p className="login-subtitle">{t('Hệ thống thi vấn đáp trực tuyến hỗ trợ bởi AI')}</p>
       </div>
 
       {/* Hiển thị thông báo lỗi nếu có */}
@@ -133,7 +135,7 @@ export default function LoginPage() {
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <span>{errorMessage}</span>
+          <span>{t(errorMessage)}</span>
         </div>
       )}
 
@@ -142,7 +144,7 @@ export default function LoginPage() {
         {/* Ô nhập Email */}
         <div className="form-group">
           <label htmlFor="email" className="form-label">
-            Email
+            {t('Email')}
           </label>
           <input
             id="email"
@@ -160,14 +162,14 @@ export default function LoginPage() {
         {/* Ô nhập Mật khẩu kèm nút ẩn/hiện mật khẩu */}
         <div className="form-group">
           <label htmlFor="password" className="form-label">
-            Mật khẩu
+            {t('Mật khẩu')}
           </label>
           <div className="password-input-wrapper">
             <input
               id="password"
               type={showPassword ? 'text' : 'password'}
               className="form-input password-input"
-              placeholder="Nhập mật khẩu"
+              placeholder={t('Nhập mật khẩu')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -179,8 +181,8 @@ export default function LoginPage() {
               className="toggle-password-btn"
               onClick={() => setShowPassword((prev) => !prev)}
               disabled={isLoading}
-              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-label={t(showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu')}
+              title={t(showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu')}
             >
               {showPassword ? (
                 /* Icon ẩn mật khẩu (mắt gạch chéo) */
@@ -220,19 +222,19 @@ export default function LoginPage() {
         {/* Tùy chọn liên kết Quên mật khẩu */}
         <div className="forgot-password-row">
           <Link to="/404" className="forgot-password-link">
-            Quên mật khẩu?
+            {t('Quên mật khẩu?')}
           </Link>
         </div>
 
         {/* Nút Submit lớn màu xanh dương */}
         <button type="submit" className="login-submit-btn" disabled={isLoading}>
-          {isLoading ? 'Đang đăng nhập...' : 'Login'}
+          {isLoading ? t('Đang đăng nhập...') : t('Đăng nhập')}
         </button>
 
         {/* Tùy chọn liên kết Đăng ký tài khoản */}
         <div className="register-link-row">
           <Link to="/register" className="register-link">
-            Chưa có tài khoản? Đăng ký ngay
+            {t('Chưa có tài khoản? Đăng ký ngay')}
           </Link>
         </div>
       </form>

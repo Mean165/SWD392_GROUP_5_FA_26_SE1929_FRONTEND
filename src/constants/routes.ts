@@ -37,6 +37,7 @@ export const APP_ROUTES = {
   student: {
     dashboard: '/student/dashboard',
     exams: '/student/exams',
+    deviceCheck: '/student/device-check',
     examDetail: '/student/exams/:id',
     examReadiness: '/student/exams/:id/readiness',
     interview: '/student/interview/:id',

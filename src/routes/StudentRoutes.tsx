@@ -8,6 +8,7 @@ import ExamDetailPage from '../pages/student/ExamDetailPage';
 import ExamReadinessPage from '../pages/student/ExamReadinessPage';
 import InterviewPage from '../pages/student/InterviewPage';
 import ExamReportPage from '../pages/student/ExamReportPage';
+import DeviceCheckPage from '../pages/student/DeviceCheckPage';
 import {
   StudentHelpPage,
   StudentHistoryPage,
@@ -27,6 +28,7 @@ export default function StudentRoutes() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboardPage />} />
           <Route path="exams" element={<ExamSchedulePage />} />
+          <Route path="device-check" element={<DeviceCheckPage />} />
           <Route path="exams/:id/readiness" element={<ExamReadinessPage />} />
           <Route path="exams/:id" element={<ExamDetailPage />} />
           <Route path="interview/:id" element={<InterviewPage />} />

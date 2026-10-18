@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { LanguageProvider } from '../../context/LanguageContext';
 import AudioPlayer from './AudioPlayer';
 
 const speechMocks = vi.hoisted(() => ({
@@ -14,6 +15,10 @@ vi.mock('../../services/interview/interviewService', () => ({
 
 let createObjectURLDescriptor: PropertyDescriptor | undefined;
 let revokeObjectURLDescriptor: PropertyDescriptor | undefined;
+
+const renderPlayer = (turnId: string) => render(
+  <LanguageProvider><AudioPlayer turnId={turnId} /></LanguageProvider>,
+);
 
 beforeEach(() => {
   createObjectURLDescriptor = Object.getOwnPropertyDescriptor(URL, 'createObjectURL');
@@ -44,7 +49,7 @@ describe('AudioPlayer', () => {
   it('reports TTS errors and provides an explicit retry action', async () => {
     speechMocks.getTurnSpeech.mockRejectedValueOnce(new Error('Không lấy được audio TTS.'));
     speechMocks.getTurnSpeech.mockResolvedValueOnce(new Blob(['mp3'], { type: 'audio/mpeg' }));
-    render(<AudioPlayer turnId="turn-uuid" />);
+    renderPlayer('turn-uuid');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Không lấy được audio TTS.');
     fireEvent.click(screen.getByRole('button', { name: 'Tải lại âm thanh câu hỏi' }));
@@ -54,7 +59,7 @@ describe('AudioPlayer', () => {
 
   it('supports manual playback, pause, and replay', async () => {
     speechMocks.getTurnSpeech.mockResolvedValue(new Blob(['mp3'], { type: 'audio/mpeg' }));
-    render(<AudioPlayer turnId="turn-uuid" />);
+    renderPlayer('turn-uuid');
     const playButton = await screen.findByRole('button', { name: 'Phát câu hỏi' });
     const audio = document.querySelector('audio');
     expect(audio).not.toBeNull();
@@ -78,7 +83,7 @@ describe('AudioPlayer', () => {
   it('handles a browser-blocked play gesture without synthesizing speech and revokes the Blob URL', async () => {
     speechMocks.getTurnSpeech.mockResolvedValue(new Blob(['mp3'], { type: 'audio/mpeg' }));
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockRejectedValue(new Error('blocked'));
-    const { unmount } = render(<AudioPlayer turnId="turn-uuid" />);
+    const { unmount } = renderPlayer('turn-uuid');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Phát câu hỏi' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('nhấn nút phát để thử lại');
@@ -95,8 +100,8 @@ describe('AudioPlayer', () => {
     speechMocks.getTurnSpeech.mockResolvedValueOnce(new Blob(['new turn'], { type: 'audio/mpeg' }));
     const createObjectURL = vi.mocked(URL.createObjectURL);
     createObjectURL.mockReturnValue('blob:new-turn');
-    const view = render(<AudioPlayer turnId="old-turn" />);
-    view.rerender(<AudioPlayer turnId="new-turn" />);
+    const view = renderPlayer('old-turn');
+    view.rerender(<LanguageProvider><AudioPlayer turnId="new-turn" /></LanguageProvider>);
     await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
     resolveOld(new Blob(['old turn'], { type: 'audio/mpeg' }));
     await waitFor(() => expect(speechMocks.getTurnSpeech).toHaveBeenCalledTimes(2));

@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom';
 import { APP_ROUTES } from '../../constants/routes';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { getStudentExamHistory, useMockExams } from '../../services/exam/studentExamAssignmentApi';
+import type { StudentExamAssignment } from '../../types/exam';
+import { useLanguage } from '../../context/LanguageContext';
+import { LanguageSetting } from '../../components/common/LanguageSelector';
 import './StudentDashboard.css';
 
 type StudentPageHeaderProps = {
@@ -10,44 +15,115 @@ type StudentPageHeaderProps = {
 };
 
 export function StudentPageHeader({ title, description, action }: StudentPageHeaderProps) {
+  const { t } = useLanguage();
   return (
     <header className="student-page-heading">
       <div>
-        <h1>{title}</h1>
-        <p>{description}</p>
+        <h1>{t(title)}</h1>
+        <p>{t(description)}</p>
       </div>
-      {action && <Link className="student-primary-button" to={action.to}>{action.label}</Link>}
+      {action && <Link className="student-primary-button" to={action.to}>{t(action.label)}</Link>}
     </header>
   );
 }
 
 export function StudentNotice({ title, children, kind = 'info' }: { title: string; children: React.ReactNode; kind?: 'info' | 'warning' }) {
+  const { t } = useLanguage();
   return (
     <section className={`student-state-card ${kind}`} role="status">
       <span className="student-state-symbol" aria-hidden="true">{kind === 'warning' ? '!' : 'i'}</span>
-      <div><h2>{title}</h2><p>{children}</p></div>
+      <div><h2>{t(title)}</h2><p>{typeof children === 'string' ? t(children) : children}</p></div>
     </section>
   );
 }
 
 function StudentEmptyPage({ title, description, message, icon, action }: StudentPageHeaderProps & { message: string; icon: string }) {
+  const { t } = useLanguage();
   return (
     <div className="student-page">
       <StudentPageHeader title={title} description={description} action={action} />
       <section className="student-empty-card">
         <span className="student-empty-icon" aria-hidden="true">{icon}</span>
-        <h2>Chưa thể tải dữ liệu</h2>
-        <p>{message}</p>
+        <h2>{t('Chưa thể tải dữ liệu')}</h2>
+        <p>{t(message)}</p>
       </section>
       <StudentNotice title="API chưa được kết nối">
-        Kết nối API cho chức năng này chưa được triển khai trong frontend. Hệ thống sẽ hiển thị dữ liệu ở đây khi dịch vụ được cung cấp.
+        {t('Kết nối API cho chức năng này chưa được triển khai trong frontend. Hệ thống sẽ hiển thị dữ liệu ở đây khi dịch vụ được cung cấp.')}
       </StudentNotice>
     </div>
   );
 }
 
 export function StudentHistoryPage() {
-  return <StudentEmptyPage title="Lịch sử thi" description="Theo dõi các kỳ thi đã tham gia và trạng thái kết quả." icon="↺" message="Lịch sử thi chưa được tải. Frontend hiện chưa có endpoint đã xác nhận để đọc các phiên thi của tài khoản này." action={{ label: 'Xem lịch thi', to: APP_ROUTES.student.exams }} />;
+  const { t, language } = useLanguage();
+  const [items, setItems] = useState<StudentExamAssignment[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError('');
+    getStudentExamHistory(page, 10).then((result) => {
+      if (!active) return;
+      setItems(result.content);
+      setTotalPages(result.totalPages);
+    }).catch((loadError: unknown) => {
+      if (active) setError(loadError instanceof Error ? loadError.message : 'Không thể tải lịch sử thi.');
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
+  }, [page]);
+
+  const statusLabel = (status: string) => ({
+    PENDING: 'Chờ xác nhận',
+    SCHEDULED: 'Đã lên lịch',
+    IN_PROGRESS: 'Đang diễn ra',
+    COMPLETED: 'Đã hoàn thành',
+  }[status] ?? status);
+
+  return (
+    <div className="student-page student-history-page">
+      <StudentPageHeader
+        title="Lịch sử thi"
+        description="Theo dõi các kỳ thi đã tham gia và trạng thái kết quả."
+        action={{ label: 'Xem lịch thi', to: APP_ROUTES.student.exams }}
+      />
+      {useMockExams && <p className="exam-schedule-mock-label" role="status">{t('Dữ liệu mẫu · Chỉ dùng để xem thử giao diện')}</p>}
+      {loading && <section className="student-state-card info" role="status">{t('Đang tải lịch sử thi…')}</section>}
+      {error && <StudentNotice title="Không thể tải lịch sử thi" kind="warning">{t(error)}</StudentNotice>}
+      {!loading && !error && items.length === 0 && (
+        <section className="student-empty-card">
+          <span className="student-empty-icon" aria-hidden="true">↺</span>
+          <h2>{t('Chưa có lịch sử thi')}</h2>
+          <p>{t('Các kỳ thi bạn đã tham gia sẽ hiển thị ở đây.')}</p>
+        </section>
+      )}
+      {!loading && !error && items.length > 0 && (
+        <section className="student-history-list" aria-label="Danh sách lịch sử thi">
+          {items.map((item) => (
+            <article className="student-history-item" key={item.assignmentId}>
+              <div>
+                <h2>{t(item.sessionName || 'Buổi thi vấn đáp')}</h2>
+                <p>{new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'vi-VN', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(item.scheduledTime))}</p>
+              </div>
+              <span>{t(statusLabel(item.assignmentStatus))}</span>
+            </article>
+          ))}
+        </section>
+      )}
+      {totalPages > 1 && (
+        <nav className="exam-schedule-pagination" aria-label="Phân trang lịch sử thi">
+          <button type="button" disabled={page <= 0 || loading} onClick={() => setPage((value) => value - 1)}>{t('Trước')}</button>
+          <span>{t('Trang')} {page + 1} / {totalPages}</span>
+          <button type="button" disabled={page + 1 >= totalPages || loading} onClick={() => setPage((value) => value + 1)}>{t('Tiếp')}</button>
+        </nav>
+      )}
+    </div>
+  );
 }
 
 export function StudentResultsPage() {
@@ -64,39 +140,58 @@ export function StudentNotificationsPage() {
 
 export function StudentProfilePage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   return (
     <div className="student-page">
       <StudentPageHeader title="Hồ sơ cá nhân" description="Thông tin tài khoản học sinh đang đăng nhập." />
       <section className="student-profile-card">
         <div className="student-profile-hero">
           <span className="student-profile-large-avatar">{(user?.fullName || user?.username || 'H').charAt(0).toLocaleUpperCase('vi-VN')}</span>
-          <div><h2>{user?.fullName || user?.username || 'Chưa có tên hiển thị'}</h2><p>Sinh viên · Thông tin tài khoản</p></div>
+          <div><h2>{user?.fullName || user?.username || t('Chưa có tên hiển thị')}</h2><p>{t('Sinh viên')} · {t('Thông tin tài khoản')}</p></div>
         </div>
         <dl className="student-profile-fields">
-          <div><dt>Họ và tên</dt><dd>{user?.fullName || user?.username || 'Chưa cập nhật'}</dd></div>
-          <div><dt>Email</dt><dd>{user?.email || 'Chưa cập nhật'}</dd></div>
-          <div><dt>Mã sinh viên</dt><dd>{user?.studentOrStaffCode || 'Chưa có thông tin'}</dd></div>
-          <div><dt>Vai trò</dt><dd>Sinh viên</dd></div>
+          <div><dt>{t('Họ và tên')}</dt><dd>{user?.fullName || user?.username || t('Chưa cập nhật')}</dd></div>
+          <div><dt>Email</dt><dd>{user?.email || t('Chưa cập nhật')}</dd></div>
+          <div><dt>{t('Mã sinh viên')}</dt><dd>{user?.studentOrStaffCode || t('Chưa có thông tin')}</dd></div>
+          <div><dt>{t('Vai trò')}</dt><dd>{t('Sinh viên')}</dd></div>
         </dl>
       </section>
       <StudentNotice title="Chỉ hiển thị thông tin đã xác thực">
-        Chỉnh sửa hồ sơ chưa được bật vì chưa có API Student profile trong frontend. Thông tin trên trang này lấy từ phiên đăng nhập hiện tại.
+        {t('Chỉnh sửa hồ sơ chưa được bật vì chưa có API Student profile trong frontend. Thông tin trên trang này lấy từ phiên đăng nhập hiện tại.')}
       </StudentNotice>
     </div>
   );
 }
 
 export function StudentSettingsPage() {
+  const { t } = useLanguage();
   return (
     <div className="student-page">
       <StudentPageHeader title="Cài đặt" description="Quản lý tùy chọn tài khoản và trải nghiệm học tập." />
       <section className="student-settings-list">
-        <div><span className="student-setting-icon">文</span><span><strong>Ngôn ngữ</strong><small>Tiếng Việt</small></span><span className="student-setting-status">Mặc định</span></div>
-        <div><span className="student-setting-icon">♧</span><span><strong>Thông báo</strong><small>Tùy chọn nhận nhắc lịch và cập nhật kết quả</small></span><span className="student-setting-status">Chưa hỗ trợ</span></div>
-        <div><span className="student-setting-icon">♙</span><span><strong>Mật khẩu</strong><small>Thay đổi mật khẩu tài khoản</small></span><span className="student-setting-status">Chưa hỗ trợ</span></div>
+        <LanguageSetting />
+        <div className="student-settings-row">
+          <span className="student-setting-icon" aria-hidden="true">
+            <svg className="student-setting-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" />
+            </svg>
+          </span>
+          <span className="student-settings-copy"><strong>{t('Thông báo')}</strong><small>{t('Tùy chọn nhận nhắc lịch và cập nhật kết quả')}</small></span>
+          <span className="student-setting-status">{t('Chưa hỗ trợ')}</span>
+        </div>
+        <div className="student-settings-row">
+          <span className="student-setting-icon" aria-hidden="true">
+            <svg className="student-setting-icon-svg" viewBox="0 0 24 24" fill="none">
+              <rect x="4" y="10" width="16" height="11" rx="2" />
+              <path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3" />
+            </svg>
+          </span>
+          <span className="student-settings-copy"><strong>{t('Mật khẩu')}</strong><small>{t('Thay đổi mật khẩu tài khoản')}</small></span>
+          <span className="student-setting-status">{t('Chưa hỗ trợ')}</span>
+        </div>
       </section>
       <StudentNotice title="Cài đặt chưa thể lưu">
-        Dự án chưa có API lưu tùy chọn Student hoặc đổi mật khẩu; các mục trên đang ở chế độ chỉ xem.
+        {t('Dự án chưa có API lưu tùy chọn Student hoặc đổi mật khẩu; các mục trên đang ở chế độ chỉ xem.')}
       </StudentNotice>
     </div>
   );
@@ -110,14 +205,15 @@ const faqs = [
 ];
 
 export function StudentHelpPage() {
+  const { t } = useLanguage();
   return (
     <div className="student-page">
       <StudentPageHeader title="Trợ giúp" description="Hướng dẫn chuẩn bị và tham gia kỳ thi vấn đáp AI." action={{ label: 'Xem lịch thi', to: APP_ROUTES.student.exams }} />
       <section className="student-faq-list">
-        {faqs.map((faq) => <details key={faq.question}><summary>{faq.question}<span aria-hidden="true">+</span></summary><p>{faq.answer}</p></details>)}
+        {faqs.map((faq) => <details key={faq.question}><summary>{t(faq.question)}<span aria-hidden="true">+</span></summary><p>{t(faq.answer)}</p></details>)}
       </section>
       <StudentNotice title="Cần hỗ trợ thêm?">
-        Hiện chưa có kênh gửi yêu cầu hỗ trợ được tích hợp. Vui lòng trao đổi với giảng viên theo kênh liên lạc của lớp.
+        {t('Hiện chưa có kênh gửi yêu cầu hỗ trợ được tích hợp. Vui lòng trao đổi với giảng viên theo kênh liên lạc của lớp.')}
       </StudentNotice>
     </div>
   );

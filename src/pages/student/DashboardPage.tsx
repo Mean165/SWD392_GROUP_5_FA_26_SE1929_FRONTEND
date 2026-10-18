@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { APP_ROUTES } from '../../constants/routes';
 import { useAuth } from '../../hooks/useAuth';
 import { StudentNotice } from './StudentPages';
+import { useLanguage } from '../../context/LanguageContext';
 import './StudentDashboard.css';
 
 const shortcuts = [
@@ -13,6 +14,7 @@ const shortcuts = [
 
 export default function StudentDashboardPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const name = user?.fullName || user?.username || 'Sinh viên';
   const firstName = name.trim().split(/\s+/).slice(-2).join(' ') || name;
 
@@ -22,10 +24,10 @@ export default function StudentDashboardPage() {
         <div className="student-dashboard-primary">
           <section className="student-welcome-banner">
             <div>
-              <span className="student-dashboard-eyebrow">KHÔNG GIAN HỌC TẬP CỦA BẠN</span>
-              <h1>Xin chào, {firstName}!</h1>
-              <p>Chuẩn bị tự tin cho kỳ thi vấn đáp tiếp theo của bạn.</p>
-              <Link to={APP_ROUTES.student.exams}>Mở lịch thi <span aria-hidden="true">→</span></Link>
+              <span className="student-dashboard-eyebrow">{t('KHÔNG GIAN HỌC TẬP CỦA BẠN')}</span>
+              <h1>{t('Xin chào')}, {firstName}!</h1>
+              <p>{t('Chuẩn bị tự tin cho kỳ thi vấn đáp tiếp theo của bạn.')}</p>
+              <Link to={APP_ROUTES.student.exams}>{t('Mở lịch thi')} <span aria-hidden="true">→</span></Link>
             </div>
             <div className="student-welcome-art" aria-hidden="true">
               <div className="student-orbit orbit-one" />
@@ -37,11 +39,11 @@ export default function StudentDashboardPage() {
 
           <section className="student-dashboard-section student-data-panel">
             <div className="student-section-heading">
-              <div><span className="student-section-kicker">CẬP NHẬT</span><h2>Kỳ thi sắp tới</h2></div>
-              <Link to={APP_ROUTES.student.exams}>Xem lịch thi <span aria-hidden="true">→</span></Link>
+              <div><span className="student-section-kicker">{t('CẬP NHẬT')}</span><h2>{t('Kỳ thi sắp tới')}</h2></div>
+              <Link to={APP_ROUTES.student.exams}>{t('Xem lịch thi')} <span aria-hidden="true">→</span></Link>
             </div>
             <StudentNotice title="Chưa thể tải lịch thi">
-              Lịch thi sẽ xuất hiện tại đây sau khi dịch vụ backend cung cấp các kỳ thi được phân công cho tài khoản của bạn. Chưa có lịch mẫu hoặc nút vào phòng thi được hiển thị.
+              {t('Lịch thi sẽ xuất hiện tại đây sau khi dịch vụ backend cung cấp các kỳ thi được phân công cho tài khoản của bạn. Chưa có lịch mẫu hoặc nút vào phòng thi được hiển thị.')}
             </StudentNotice>
           </section>
         </div>
@@ -49,13 +51,13 @@ export default function StudentDashboardPage() {
         <aside className="student-dashboard-secondary">
           <section className="student-dashboard-section student-overview-panel">
             <div className="student-section-heading">
-              <div><span className="student-section-kicker">TRUY CẬP NHANH</span><h2>Tổng quan của bạn</h2></div>
+              <div><span className="student-section-kicker">{t('TRUY CẬP NHANH')}</span><h2>{t('Tổng quan của bạn')}</h2></div>
             </div>
             <div className="student-shortcut-grid">
               {shortcuts.map((item) => (
                 <Link to={item.to} className="student-shortcut-card" key={item.to}>
                   <span className="student-shortcut-icon" aria-hidden="true">{item.icon}</span>
-                  <span className="student-shortcut-copy"><strong>{item.title}</strong><small>{item.description}</small></span>
+                  <span className="student-shortcut-copy"><strong>{t(item.title)}</strong><small>{t(item.description)}</small></span>
                   <span className="student-shortcut-arrow" aria-hidden="true">→</span>
                 </Link>
               ))}
@@ -64,12 +66,12 @@ export default function StudentDashboardPage() {
 
           <section className="student-dashboard-section student-progress-panel">
             <div className="student-section-heading">
-              <div><span className="student-section-kicker">KẾT QUẢ</span><h2>Tiến độ học tập</h2></div>
-              <Link to={APP_ROUTES.student.results}>Kết quả <span aria-hidden="true">→</span></Link>
+              <div><span className="student-section-kicker">{t('KẾT QUẢ')}</span><h2>{t('Tiến độ học tập')}</h2></div>
+              <Link to={APP_ROUTES.student.results}>{t('Kết quả')} <span aria-hidden="true">→</span></Link>
             </div>
             <div className="student-dashboard-unavailable">
               <span aria-hidden="true">✧</span>
-              <p>Thống kê và điểm số chỉ hiển thị từ kết quả chính thức đã được giảng viên công bố.</p>
+              <p>{t('Thống kê và điểm số chỉ hiển thị từ kết quả chính thức đã được giảng viên công bố.')}</p>
             </div>
           </section>
         </aside>
