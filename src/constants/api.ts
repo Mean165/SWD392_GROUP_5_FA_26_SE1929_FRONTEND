@@ -8,7 +8,7 @@ export const API_ENDPOINTS = {
   user: '/user',
   question: '/question',
   exam: '/exam',
-  interview: '/interview',
+  interview: '/interviews',
   evaluation: '/evaluation',
   monitoring: '/monitoring',
   report: '/report',

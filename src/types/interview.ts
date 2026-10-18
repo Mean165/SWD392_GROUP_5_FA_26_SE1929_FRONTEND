@@ -1,43 +1,58 @@
-export interface Interview {
-  id?: number;
-  examId?: number;
-  studentId?: number;
-  lecturerId?: number;
-  status?: string;
-  startedAt?: string;
-  endedAt?: string;
+export interface InteractionTurnResponse {
+  turnId: string;
+  attemptId: string;
+  mainQuestionId: string;
+  turnOrder: number;
+  turnType: string;
+  aiQuestionText: string;
+  transcriptText: string | null;
+  audioSegmentUrl: string | null;
+  aiReasoning: string | null;
+  createdAt: string;
 }
 
-export interface InterviewQuestion {
-  id?: number;
-  interviewId?: number;
-  questionId?: number;
-  content?: string;
-  order?: number;
-  isFollowUp?: boolean;
+export interface InterviewResponse {
+  attemptId: string;
+  assignmentId: string;
+  sessionId: string;
+  studentId: string;
+  status: string;
+  startTime: string | null;
+  endTime: string | null;
+  currentTurn: InteractionTurnResponse | null;
+  turns: InteractionTurnResponse[];
 }
 
-export interface InterviewAnswer {
-  id?: number;
-  interviewQuestionId?: number;
-  answerText?: string;
-  audioUrl?: string;
-  confidenceScore?: number;
-  submittedAt?: string;
+export interface SubmitAnswerResponse {
+  turnId: string;
+  transcriptText: string | null;
+  completed: boolean;
+  followUpGenerated: boolean;
+  nextTurn: InteractionTurnResponse | null;
+  answerClassification: string | null;
+  analysisSummary: string | null;
+  assessments: Array<{
+    assessmentId: string;
+    criteriaId: string;
+    criteriaName: string;
+    semanticSimilarity: number | null;
+    complianceStatus: string | null;
+    aiSuggestedPoints: number | null;
+    missingConcepts: string | null;
+    aiExplanationReasoning: string | null;
+  }>;
 }
 
-export interface FollowUpQuestion {
-  id?: number;
-  interviewId?: number;
-  prompt: string;
-  reason?: string;
-  createdAt?: string;
-}
-
-export interface Transcript {
-  id?: number;
-  interviewId?: number;
-  speaker?: string;
-  text: string;
-  createdAt?: string;
-}
+export type SubmitAnswerPayload =
+  | {
+      attemptId: string;
+      turnId: string;
+      audioSegmentUrl: string;
+      transcriptText?: never;
+    }
+  | {
+      attemptId: string;
+      turnId: string;
+      transcriptText: string;
+      audioSegmentUrl?: never;
+    };

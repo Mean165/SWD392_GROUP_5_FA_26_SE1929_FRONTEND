@@ -1,0 +1,198 @@
+.interview-room {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.interview-question,
+.interview-recorder,
+.interview-state-card {
+  padding: clamp(1.15rem, 3vw, 1.75rem);
+  border: 1px solid var(--aiviva-border, #e5ebf4);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(28 43 74 / 5%);
+}
+
+.interview-question-kicker {
+  margin: 0 0 0.5rem;
+  color: #435c80;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.interview-question h2 {
+  margin: 0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.interview-audio-player {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  background: #edf4ff;
+}
+
+.interview-audio-player audio {
+  display: none;
+}
+
+.interview-audio-status,
+.interview-help,
+.interview-processing-status,
+.interview-page-status {
+  color: #45536b;
+  font-size: 0.95rem;
+}
+
+.interview-audio-status {
+  flex: 1;
+}
+
+.interview-recorder h3,
+.interview-transcript h3 {
+  margin: 0 0 0.45rem;
+}
+
+.interview-help {
+  margin: 0 0 1rem;
+  line-height: 1.6;
+}
+
+.interview-recorder-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.interview-recorder button:disabled,
+.interview-state-card button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.interview-secondary-button,
+.interview-text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.65rem 0.95rem;
+  border: 1px solid #b8c8e0;
+  border-radius: 8px;
+  background: #fff;
+  color: #1c2b4a;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.interview-secondary-button:disabled {
+  cursor: wait;
+}
+
+.interview-recording-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 700;
+}
+
+.interview-recording-indicator {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #b42318;
+  box-shadow: 0 0 0 4px #fee4e2;
+}
+
+.interview-recording-ready {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1rem;
+  font-weight: 650;
+}
+
+.interview-text-button {
+  min-height: 34px;
+  padding: 0.35rem 0.7rem;
+  color: #31415d;
+  font-size: 0.9rem;
+}
+
+.interview-submit-button {
+  margin-top: 1rem;
+}
+
+.interview-processing-status {
+  min-height: 1.5rem;
+  margin: 0.65rem 0 0;
+}
+
+.interview-error {
+  margin: 0.8rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border-left: 4px solid #b42318;
+  border-radius: 4px;
+  background: #fff1f0;
+  color: #8a1c13;
+}
+
+.interview-transcript {
+  padding: 1rem 1.2rem;
+  border: 1px solid #b9d5c5;
+  border-radius: 10px;
+  background: #f3fbf5;
+}
+
+.interview-transcript p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.interview-state-card {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.interview-state-card h2 {
+  margin-top: 0;
+}
+
+.interview-state-card p {
+  line-height: 1.6;
+}
+
+.interview-completed {
+  border-color: #b9d5c5;
+}
+
+.interview-support-link {
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.interview-support-link a {
+  color: #245db5;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .interview-audio-player,
+  .interview-recorder-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .interview-audio-status {
+    flex: initial;
+  }
+}
