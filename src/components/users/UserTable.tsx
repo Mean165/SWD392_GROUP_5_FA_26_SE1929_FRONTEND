@@ -13,15 +13,15 @@ export default function UserTable({ users, onEdit, onDelete, isLoading = false }
   const getRoleInfo = (user: UserResponse): { label: string; className: string } => {
     const code = (user.role?.roleCode || user.roleName || '').toUpperCase();
     if (code === 'AD' || code === 'ADMIN') {
-      return { label: 'Admin', className: 'role-badge badge-admin' };
+      return { label: 'Quản trị viên', className: 'role-badge badge-admin' };
     }
     if (code === 'LE' || code === 'LECTURER') {
-      return { label: 'Lecturer', className: 'role-badge badge-lecturer' };
+      return { label: 'Giảng viên', className: 'role-badge badge-lecturer' };
     }
     if (code === 'ST' || code === 'STUDENT') {
-      return { label: 'Student', className: 'role-badge badge-student' };
+      return { label: 'Sinh viên', className: 'role-badge badge-student' };
     }
-    return { label: code || 'User', className: 'role-badge badge-default' };
+    return { label: code || 'Tài khoản', className: 'role-badge badge-default' };
   };
 
   return (
@@ -29,13 +29,13 @@ export default function UserTable({ users, onEdit, onDelete, isLoading = false }
       <table className="user-table">
         <thead>
           <tr>
-            <th style={{ width: '15%' }}>ID</th>
-            <th style={{ width: '10%' }}>Code</th>
-            <th style={{ width: '19%' }}>Name</th>
+            <th style={{ width: '15%' }}>Mã tài khoản</th>
+            <th style={{ width: '10%' }}>Mã cán bộ/SV</th>
+            <th style={{ width: '19%' }}>Họ và tên</th>
             <th style={{ width: '22%' }}>Email</th>
-            <th style={{ width: '11%' }}>Role</th>
-            <th style={{ width: '10%' }}>Status</th>
-            <th style={{ width: '13%', textAlign: 'center' }}>Actions</th>
+            <th style={{ width: '11%' }}>Vai trò</th>
+            <th style={{ width: '10%' }}>Trạng thái</th>
+            <th style={{ width: '13%', textAlign: 'center' }}>Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -67,7 +67,7 @@ export default function UserTable({ users, onEdit, onDelete, isLoading = false }
                     }
                   >
                     <span className="status-dot" />
-                    {user.isActive === false ? 'Inactive' : 'Active'}
+                    {user.isActive === false ? 'Đã khóa' : 'Hoạt động'}
                   </span>
                 </td>
                 <td className="cell-actions">
@@ -79,7 +79,7 @@ export default function UserTable({ users, onEdit, onDelete, isLoading = false }
                       disabled={isLoading}
                       title="Chỉnh sửa người dùng"
                     >
-                      Edit
+                      Sửa
                     </button>
                     <button
                       type="button"
@@ -88,7 +88,7 @@ export default function UserTable({ users, onEdit, onDelete, isLoading = false }
                       disabled={isLoading}
                       title="Xóa người dùng"
                     >
-                      Delete
+                      Xóa
                     </button>
                   </div>
                 </td>

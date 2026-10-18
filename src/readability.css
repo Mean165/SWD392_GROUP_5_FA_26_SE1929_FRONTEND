@@ -1,0 +1,171 @@
+.aiviva-shell {
+  --aiviva-ink: #253653;
+  --aiviva-muted: #7888a2;
+  --aiviva-blue: #3478f6;
+  --aiviva-border: #e5eaf2;
+  --aiviva-canvas: #f2f5fb;
+  --aiviva-card-shadow: 0 4px 14px rgb(31 53 89 / 5%);
+}
+
+.aiviva-content {
+  min-height: calc(100vh - 64px);
+  color: var(--aiviva-ink);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.aiviva-content :is(p, small, label, li, td, th, dt, dd, summary) {
+  font-size: max(14px, 1em) !important;
+  line-height: 1.6;
+}
+
+.aiviva-content :is(h1, h2, h3, h4) {
+  color: #253653;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+.aiviva-content :is(h1, h2) {
+  font-size: max(20px, 1em);
+}
+
+.aiviva-content :is(.student-dashboard-eyebrow, .student-section-kicker, .workflow-eyebrow, .admin-dashboard-eyebrow) {
+  font-size: 11px !important;
+  font-weight: 700;
+}
+
+.aiviva-content :is(.workflow-status-badge, .student-setting-status, .admin-live-indicator) {
+  font-size: 13px !important;
+}
+
+.aiviva-content :is(.workflow-page, .student-page, .lecturer-dashboard, .admin-dashboard, .users-page-container) {
+  gap: 22px !important;
+}
+
+.aiviva-content .student-dashboard {
+  width: 100%;
+}
+
+.aiviva-content [class*="grid"] {
+  gap: 20px;
+}
+
+.aiviva-content :is(
+  .workflow-card,
+  .workflow-status-panel,
+  .student-dashboard-section,
+  .student-state-card,
+  .student-empty-card,
+  .student-profile-card,
+  .student-settings-list,
+  .student-faq-list,
+  .student-readiness-card,
+  .admin-dashboard-users-panel,
+  .admin-dashboard-quick-links,
+  .lecturer-dashboard-grid > a,
+  .admin-stat-card,
+  .admin-dashboard-link-grid > a,
+  .student-shortcut-card,
+  .card-panel,
+  .user-filter-card
+) {
+  min-width: 0;
+  border: 1px solid #e5eaf2;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--aiviva-card-shadow);
+}
+
+.aiviva-content :is(
+  .workflow-card,
+  .student-dashboard-section,
+  .admin-dashboard-users-panel,
+  .admin-dashboard-quick-links
+) {
+  padding: 22px;
+}
+
+.aiviva-content :is(.btn, .student-primary-button, .admin-dashboard-primary, .workflow-page button) {
+  min-height: 40px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 650;
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.aiviva-content :is(input, select, textarea, .filter-input, .filter-select) {
+  min-height: 42px;
+  border-color: #dfe6f0;
+  border-radius: 9px;
+  background: #fff;
+  font-size: 14px;
+}
+
+.aiviva-content :is(input, select, textarea, .filter-input, .filter-select):focus {
+  border-color: #8db2f6;
+  box-shadow: 0 0 0 3px rgb(52 120 246 / 11%);
+}
+
+.aiviva-content :is(table, .user-table) {
+  border-color: #e8edf4;
+}
+
+.aiviva-content :is(th, .user-table th) {
+  color: #52627b;
+  background: #f6f8fc;
+  font-weight: 650;
+}
+
+.aiviva-content :is(td, .user-table td) {
+  color: #3e4e68;
+}
+
+.aiviva-content :is(tr, .user-table-row) {
+  transition: background-color .15s ease;
+}
+
+.aiviva-content :is(tr, .user-table-row):hover {
+  background-color: #f8faff;
+}
+
+.aiviva-content .student-dashboard {
+  display: grid;
+  gap: 20px;
+}
+
+.aiviva-content :is(.student-dashboard-columns, .student-dashboard-primary, .student-dashboard-secondary, .student-dashboard-lower-grid) {
+  gap: 20px;
+}
+
+.auth-layout :is(p, small, a, button, input, select, textarea, label, li) {
+  font-size: max(15px, 1em);
+  font-weight: 500;
+}
+
+@media (max-width: 680px) {
+  .aiviva-content {
+    min-height: auto;
+    padding: 18px 14px 28px;
+  }
+
+  .aiviva-content :is(.workflow-page, .student-page, .lecturer-dashboard, .admin-dashboard, .users-page-container) {
+    gap: 18px !important;
+  }
+
+  .aiviva-content [class*="grid"] {
+    gap: 16px;
+  }
+
+  .aiviva-content :is(.student-dashboard-columns, .student-dashboard-primary, .student-dashboard-secondary, .student-dashboard-lower-grid) {
+    gap: 16px;
+  }
+
+  .aiviva-content :is(
+    .workflow-card,
+    .student-dashboard-section,
+    .admin-dashboard-users-panel,
+    .admin-dashboard-quick-links
+  ) {
+    padding: 18px;
+  }
+}

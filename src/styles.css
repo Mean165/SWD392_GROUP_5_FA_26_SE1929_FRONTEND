@@ -1,9 +1,14 @@
 :root {
+  --aiviva-ink: #1c2b4a;
+  --aiviva-muted: #7886a0;
+  --aiviva-blue: #3478f6;
+  --aiviva-border: #e5ebf4;
+  --aiviva-canvas: #f4f7fc;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #1f2937;
-  background: #f3f4f6;
+  color: var(--aiviva-ink);
+  background: var(--aiviva-canvas);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -22,7 +27,7 @@ html, body, #root {
 
 body {
   min-height: 100vh;
-  background: #f5f7fb;
+  background: var(--aiviva-canvas);
 }
 
 a {
@@ -32,6 +37,11 @@ a {
 
 button, input, select, textarea {
   font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid #8eb5ff;
+  outline-offset: 2px;
 }
 
 .layout-shell {

@@ -1,27 +1,26 @@
-import apiClient from '../api/apiClient';
 import type { SystemConfiguration, SystemLanguageConfig } from '../../types/system';
+import { backendUnavailable } from '../api/backendUnavailable';
 
 export const getConfigurations = async (): Promise<SystemConfiguration[]> => {
-  // TODO: connect to backend /system/configurations
-  return Promise.resolve([]);
+  return backendUnavailable('System configuration');
 };
 
 export const updateConfiguration = async (key: string, value: string): Promise<SystemConfiguration> => {
-  // TODO: connect to backend /system/configurations/:key
-  return Promise.resolve({} as SystemConfiguration);
+  void key;
+  void value;
+  return backendUnavailable('System configuration');
 };
 
 export const getLanguageConfiguration = async (): Promise<SystemLanguageConfig | null> => {
-  // TODO: connect to backend /system/language
-  return Promise.resolve(null);
+  return backendUnavailable('System language configuration');
 };
 
 export const getSubjectAssignments = async (): Promise<Record<string, unknown>[]> => {
-  // TODO: connect to backend /system/subject-assignments
-  return Promise.resolve([]);
+  return backendUnavailable('Subject assignment');
 };
 
 export const assignLecturer = async (subjectId: number, lecturerId: number): Promise<unknown> => {
-  // TODO: connect to backend /system/assign-lecturer
-  return Promise.resolve({});
+  void subjectId;
+  void lecturerId;
+  return backendUnavailable('Lecturer assignment');
 };

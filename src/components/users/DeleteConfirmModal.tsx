@@ -56,7 +56,7 @@ export default function DeleteConfirmModal({
       >
         <div className="modal-header">
           <h3 id="delete-dialog-title" className="modal-title text-danger">
-            Delete User
+            Xóa tài khoản
           </h3>
           <button
             type="button"
@@ -76,16 +76,16 @@ export default function DeleteConfirmModal({
         )}
 
         <div className="modal-body-confirm">
-          <p className="confirm-prompt">Are you sure you want to delete this user?</p>
+          <p className="confirm-prompt">Bạn có chắc chắn muốn xóa tài khoản này không?</p>
 
           <div className="confirm-user-info-box">
             <div className="info-row">
-              <span className="info-label">Name:</span>
+              <span className="info-label">Họ và tên:</span>
               <span className="info-value font-medium">{user.fullName || '—'}</span>
             </div>
             {user.studentOrStaffCode && (
               <div className="info-row">
-                <span className="info-label">Code:</span>
+                <span className="info-label">Mã cán bộ/SV:</span>
                 <span className="info-value font-medium">{user.studentOrStaffCode}</span>
               </div>
             )}
@@ -94,15 +94,15 @@ export default function DeleteConfirmModal({
               <span className="info-value">{user.email}</span>
             </div>
             <div className="info-row">
-              <span className="info-label">Role:</span>
+              <span className="info-label">Vai trò:</span>
               <span className="info-value">
                 {user.role?.roleCode === 'AD'
-                  ? 'Admin'
+                  ? 'Quản trị viên'
                   : user.role?.roleCode === 'LE'
-                  ? 'Lecturer'
+                  ? 'Giảng viên'
                   : user.role?.roleCode === 'ST'
-                  ? 'Student'
-                  : user.role?.roleName || 'User'}
+                  ? 'Sinh viên'
+                  : user.role?.roleName || 'Tài khoản'}
               </span>
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function DeleteConfirmModal({
             onClick={handleClose}
             disabled={isDeleting}
           >
-            Cancel
+            Hủy
           </button>
           <button
             type="button"
@@ -128,7 +128,7 @@ export default function DeleteConfirmModal({
             disabled={isDeleting}
             id="btn-confirm-delete-user"
           >
-            {isDeleting ? 'Deleting...' : 'Delete'}
+            {isDeleting ? 'Đang xóa…' : 'Xóa tài khoản'}
           </button>
         </div>
       </div>

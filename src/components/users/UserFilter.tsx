@@ -32,23 +32,21 @@ export default function UserFilter({ onSearch, onReset, isLoading = false }: Use
   return (
     <div className="user-filter-card">
       <form onSubmit={handleSearch} className="user-filter-form">
-        {/* Name input */}
         <div className="filter-field">
           <label htmlFor="filter-name" className="filter-label">
-            Name
+            Họ và tên
           </label>
           <input
             id="filter-name"
             type="text"
             className="filter-input"
-            placeholder="Search by name"
+            placeholder="Tìm theo họ tên"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={isLoading}
           />
         </div>
 
-        {/* Email input */}
         <div className="filter-field">
           <label htmlFor="filter-email" className="filter-label">
             Email
@@ -57,17 +55,16 @@ export default function UserFilter({ onSearch, onReset, isLoading = false }: Use
             id="filter-email"
             type="text"
             className="filter-input"
-            placeholder="Search by email"
+            placeholder="Tìm theo email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={isLoading}
           />
         </div>
 
-        {/* Role select */}
         <div className="filter-field">
           <label htmlFor="filter-role" className="filter-label">
-            Role
+            Vai trò
           </label>
           <select
             id="filter-role"
@@ -76,14 +73,13 @@ export default function UserFilter({ onSearch, onReset, isLoading = false }: Use
             onChange={(e) => setRole(e.target.value)}
             disabled={isLoading}
           >
-            <option value="">All</option>
-            <option value="AD">AD</option>
-            <option value="LE">LE</option>
-            <option value="ST">ST</option>
+            <option value="">Tất cả</option>
+            <option value="AD">Quản trị viên</option>
+            <option value="LE">Giảng viên</option>
+            <option value="ST">Sinh viên</option>
           </select>
         </div>
 
-        {/* Action buttons */}
         <div className="filter-actions">
           <button
             type="submit"
@@ -91,7 +87,7 @@ export default function UserFilter({ onSearch, onReset, isLoading = false }: Use
             disabled={isLoading}
             id="btn-filter-search"
           >
-            Search
+            Tìm kiếm
           </button>
           <button
             type="button"
@@ -100,7 +96,7 @@ export default function UserFilter({ onSearch, onReset, isLoading = false }: Use
             disabled={isLoading}
             id="btn-filter-reset"
           >
-            Reset
+            Xóa lọc
           </button>
         </div>
       </form>

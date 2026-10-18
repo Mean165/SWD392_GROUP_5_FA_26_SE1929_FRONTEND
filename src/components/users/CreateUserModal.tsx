@@ -97,7 +97,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
       >
         <div className="modal-header">
           <h3 id="create-user-modal-title" className="modal-title">
-            Create User
+            Tạo tài khoản
           </h3>
           <button
             type="button"
@@ -117,10 +117,9 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
         )}
 
         <form onSubmit={handleSubmit} className="modal-form" noValidate>
-          {/* Full Name */}
           <div className="form-group">
             <label htmlFor="create-full-name" className="form-label">
-              Full Name <span className="text-required">*</span>
+              Họ và tên <span className="text-required">*</span>
             </label>
             <input
               id="create-full-name"
@@ -137,7 +136,6 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
             {errors.fullName && <p className="field-error-text">{errors.fullName}</p>}
           </div>
 
-          {/* Email */}
           <div className="form-group">
             <label htmlFor="create-email" className="form-label">
               Email <span className="text-required">*</span>
@@ -146,7 +144,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
               id="create-email"
               type="email"
               className={`form-input ${errors.email ? 'input-error' : ''}`}
-              placeholder="example@aives.edu.vn"
+              placeholder="email@example.com"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -157,10 +155,9 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
             {errors.email && <p className="field-error-text">{errors.email}</p>}
           </div>
 
-          {/* Role */}
           <div className="form-group">
             <label htmlFor="create-role" className="form-label">
-              Role <span className="text-required">*</span>
+              Vai trò <span className="text-required">*</span>
             </label>
             <select
               id="create-role"
@@ -172,9 +169,9 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
               }}
               disabled={isSubmitting}
             >
-              <option value="AD">Admin (AD)</option>
-              <option value="LE">Lecturer (LE)</option>
-              <option value="ST">Student (ST)</option>
+              <option value="AD">Quản trị viên</option>
+              <option value="LE">Giảng viên</option>
+              <option value="ST">Sinh viên</option>
             </select>
             {errors.roleCode && <p className="field-error-text">{errors.roleCode}</p>}
           </div>
@@ -186,7 +183,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
               onClick={handleClose}
               disabled={isSubmitting}
             >
-              Cancel
+              Hủy
             </button>
             <button
               type="submit"
@@ -194,7 +191,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUs
               disabled={isSubmitting}
               id="btn-submit-create-user"
             >
-              {isSubmitting ? 'Creating...' : 'Create User'}
+              {isSubmitting ? 'Đang tạo…' : 'Tạo tài khoản'}
             </button>
           </div>
         </form>

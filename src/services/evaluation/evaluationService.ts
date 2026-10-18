@@ -1,27 +1,28 @@
-import apiClient from '../api/apiClient';
 import type { AIScoreSuggestion, Evaluation, LecturerFinalScore } from '../../types/evaluation';
+import { backendUnavailable } from '../api/backendUnavailable';
 
 export const getEvaluations = async (): Promise<Evaluation[]> => {
-  // TODO: connect to backend /evaluation
-  return Promise.resolve([]);
+  return backendUnavailable('Evaluation');
 };
 
 export const getEvaluationById = async (id: number): Promise<Evaluation | null> => {
-  // TODO: connect to backend /evaluation/:id
-  return Promise.resolve(null);
+  void id;
+  return backendUnavailable('Evaluation');
 };
 
 export const getAIScoreSuggestion = async (evaluationId: number): Promise<AIScoreSuggestion | null> => {
-  // TODO: connect to backend /evaluation/:id/ai-score-suggestion
-  return Promise.resolve(null);
+  void evaluationId;
+  return backendUnavailable('AI score suggestion');
 };
 
 export const submitLecturerScore = async (evaluationId: number, payload: LecturerFinalScore): Promise<Evaluation> => {
-  // TODO: connect to backend /evaluation/:id/score
-  return Promise.resolve({} as Evaluation);
+  void evaluationId;
+  void payload;
+  return backendUnavailable('Lecturer final score');
 };
 
 export const updateEvaluation = async (id: number, payload: Partial<Evaluation>): Promise<Evaluation> => {
-  // TODO: connect to backend /evaluation/:id
-  return Promise.resolve({} as Evaluation);
+  void id;
+  void payload;
+  return backendUnavailable('Evaluation');
 };

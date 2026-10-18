@@ -144,7 +144,7 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
       >
         <div className="modal-header">
           <h3 id="edit-user-modal-title" className="modal-title">
-            Edit User
+            Chỉnh sửa tài khoản
           </h3>
           <button
             type="button"
@@ -170,10 +170,9 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="modal-form" noValidate>
-            {/* User ID & Staff/Student Code */}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <div className="form-group" style={{ flex: 1 }}>
-                <label className="form-label text-muted">User ID</label>
+                <label className="form-label text-muted">Mã tài khoản</label>
                 <input
                   type="text"
                   className="form-input input-readonly"
@@ -184,7 +183,7 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
               </div>
               {studentOrStaffCode && (
                 <div className="form-group" style={{ width: '130px' }}>
-                  <label className="form-label text-muted">Code</label>
+                  <label className="form-label text-muted">Mã cán bộ/SV</label>
                   <input
                     type="text"
                     className="form-input input-readonly font-medium"
@@ -196,10 +195,9 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
               )}
             </div>
 
-            {/* Full Name */}
             <div className="form-group">
               <label htmlFor="edit-full-name" className="form-label">
-                Full Name <span className="text-required">*</span>
+                Họ và tên <span className="text-required">*</span>
               </label>
               <input
                 id="edit-full-name"
@@ -216,7 +214,6 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
               {errors.fullName && <p className="field-error-text">{errors.fullName}</p>}
             </div>
 
-            {/* Email */}
             <div className="form-group">
               <label htmlFor="edit-email" className="form-label">
                 Email <span className="text-required">*</span>
@@ -225,7 +222,7 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
                 id="edit-email"
                 type="email"
                 className={`form-input ${errors.email ? 'input-error' : ''}`}
-                placeholder="example@aives.edu.vn"
+                placeholder="email@example.com"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -236,10 +233,9 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
               {errors.email && <p className="field-error-text">{errors.email}</p>}
             </div>
 
-            {/* Role */}
             <div className="form-group">
               <label htmlFor="edit-role" className="form-label">
-                Role <span className="text-required">*</span>
+                Vai trò <span className="text-required">*</span>
               </label>
               <select
                 id="edit-role"
@@ -251,17 +247,16 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
                 }}
                 disabled={isSubmitting}
               >
-                <option value="AD">Admin (AD)</option>
-                <option value="LE">Lecturer (LE)</option>
-                <option value="ST">Student (ST)</option>
+                <option value="AD">Quản trị viên</option>
+                <option value="LE">Giảng viên</option>
+                <option value="ST">Sinh viên</option>
               </select>
               {errors.roleCode && <p className="field-error-text">{errors.roleCode}</p>}
             </div>
 
-            {/* Status (isActive) */}
             <div className="form-group">
               <label htmlFor="edit-status" className="form-label">
-                Status
+                Trạng thái
               </label>
               <select
                 id="edit-status"
@@ -270,8 +265,8 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
                 onChange={(e) => setIsActive(e.target.value === 'active')}
                 disabled={isSubmitting}
               >
-                <option value="active">Active (Hoạt động)</option>
-                <option value="inactive">Inactive (Khóa)</option>
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Đã khóa</option>
               </select>
             </div>
 
@@ -282,7 +277,7 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
                 onClick={handleClose}
                 disabled={isSubmitting}
               >
-                Cancel
+                Hủy
               </button>
               <button
                 type="submit"
@@ -290,7 +285,7 @@ export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: Ed
                 disabled={isSubmitting}
                 id="btn-submit-edit-user"
               >
-                {isSubmitting ? 'Saving...' : 'Save Changes'}
+                {isSubmitting ? 'Đang lưu…' : 'Lưu thay đổi'}
               </button>
             </div>
           </form>

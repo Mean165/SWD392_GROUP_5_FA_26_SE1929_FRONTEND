@@ -96,9 +96,9 @@ export default function UsersPage() {
       {/* Page Header */}
       <div className="users-page-header">
         <div className="users-page-title-group">
-          <h1>User Management</h1>
+          <h1>Quản lý tài khoản</h1>
           <p className="users-page-subtitle">
-            Quản lý tài khoản Admin, Giảng viên và Sinh viên trong hệ thống AIVES
+            Quản lý tài khoản quản trị viên, giảng viên và sinh viên trong AiViva
           </p>
         </div>
         <button
@@ -107,7 +107,7 @@ export default function UsersPage() {
           onClick={() => setIsCreateModalOpen(true)}
           id="btn-open-create-user"
         >
-          <span>+</span> Create User
+          <span>+</span> Tạo tài khoản
         </button>
       </div>
 
@@ -138,7 +138,7 @@ export default function UsersPage() {
         {isLoading ? (
           <div className="state-container">
             <div className="loading-spinner" />
-            <p className="state-title">Loading users...</p>
+            <p className="state-title">Đang tải danh sách tài khoản…</p>
             <p className="state-desc">Đang tải danh sách người dùng từ hệ thống</p>
           </div>
         ) : errorMessage ? (
@@ -150,12 +150,12 @@ export default function UsersPage() {
               className="btn btn-secondary"
               onClick={() => loadUsers(currentFilter)}
             >
-              Retry
+              Thử lại
             </button>
           </div>
         ) : users.length === 0 ? (
           <div className="state-container">
-            <p className="state-title">No users found.</p>
+            <p className="state-title">Không tìm thấy tài khoản.</p>
             <p className="state-desc">
               {currentFilter
                 ? 'Không có người dùng nào khớp với điều kiện lọc.'
@@ -167,7 +167,7 @@ export default function UsersPage() {
                 className="btn btn-secondary"
                 onClick={handleReset}
               >
-                Clear filter
+                Xóa bộ lọc
               </button>
             )}
           </div>

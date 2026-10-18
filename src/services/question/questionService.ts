@@ -1,52 +1,54 @@
-import apiClient from '../api/apiClient';
 import type { Question, GenerateQuestionRequest, QuestionImportRequest } from '../../types/question';
 import type { Rubric } from '../../types/rubric';
+import { backendUnavailable } from '../api/backendUnavailable';
 
 export const getQuestions = async (): Promise<Question[]> => {
-  // TODO: connect to backend /question
-  return Promise.resolve([]);
+  return backendUnavailable('Question bank');
 };
 
 export const getQuestionById = async (id: number): Promise<Question | null> => {
-  // TODO: connect to backend /question/:id
-  return Promise.resolve(null);
+  void id;
+  return backendUnavailable('Question bank');
 };
 
 export const createQuestion = async (payload: Partial<Question>): Promise<Question> => {
-  // TODO: connect to backend /question
-  return Promise.resolve({} as Question);
+  void payload;
+  return backendUnavailable('Question bank');
 };
 
 export const updateQuestion = async (id: number, payload: Partial<Question>): Promise<Question> => {
-  // TODO: connect to backend /question/:id
-  return Promise.resolve({} as Question);
+  void id;
+  void payload;
+  return backendUnavailable('Question bank');
 };
 
 export const deleteQuestion = async (id: number): Promise<void> => {
-  // TODO: connect to backend /question/:id
+  void id;
+  return backendUnavailable('Question bank');
 };
 
 export const importQuestions = async (payload: QuestionImportRequest): Promise<Question[]> => {
-  // TODO: connect to backend /question/import
-  return Promise.resolve([]);
+  void payload;
+  return backendUnavailable('Question import');
 };
 
 export const generateQuestions = async (payload: GenerateQuestionRequest): Promise<Question[]> => {
-  // TODO: connect to backend /question/generate
-  return Promise.resolve([]);
+  void payload;
+  return backendUnavailable('AI/RAG question generation');
 };
 
 export const getRubric = async (questionId?: number): Promise<Rubric | null> => {
-  // TODO: connect to backend /question/rubric or /rubric
-  return Promise.resolve(null);
+  void questionId;
+  return backendUnavailable('Rubric');
 };
 
 export const createRubric = async (payload: Rubric): Promise<Rubric> => {
-  // TODO: connect to backend /question/rubric
-  return Promise.resolve({} as Rubric);
+  void payload;
+  return backendUnavailable('Rubric');
 };
 
 export const updateRubric = async (id: number, payload: Rubric): Promise<Rubric> => {
-  // TODO: connect to backend /question/rubric/:id
-  return Promise.resolve({} as Rubric);
+  void id;
+  void payload;
+  return backendUnavailable('Rubric');
 };
