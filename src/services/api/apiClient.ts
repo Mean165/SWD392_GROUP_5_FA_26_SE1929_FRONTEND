@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const apiBaseUrl = import.meta.env.DEV
+  ? '/api'
+  : import.meta.env.VITE_API_BASE_URL || '/api';
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: apiBaseUrl,
   timeout: 20000,
   headers: {
     'Content-Type': 'application/json',
@@ -20,6 +24,10 @@ apiClient.interceptors.request.use((config) => {
       delete config.headers.authorization;
     }
     return config;
+  }
+
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    config.headers.setContentType(false);
   }
 
   const token = localStorage.getItem('accessToken');

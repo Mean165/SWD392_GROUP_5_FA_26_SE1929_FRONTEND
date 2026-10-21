@@ -7,6 +7,7 @@ interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   login: (payload: LoginRequest) => Promise<User>;
+  changePassword: (newPassword: string) => Promise<User>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
   getCurrentUser: () => Promise<User | null>;
@@ -32,6 +33,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     storage.set(AUTH_STORAGE_KEY, loggedInUser);
     setUser(loggedInUser);
     return loggedInUser;
+  };
+
+  const changePassword = async (newPassword: string): Promise<User> => {
+    const authResponse = await authService.changePassword(newPassword);
+    const updatedUser: User = {
+      ...(authResponse.user || user!),
+      mustChangePassword: false,
+    };
+    storage.set(AUTH_STORAGE_KEY, updatedUser);
+    setUser(updatedUser);
+    return updatedUser;
   };
 
   const logout = async (): Promise<void> => {
@@ -66,6 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       user,
       isAuthenticated: Boolean(user),
       login,
+      changePassword,
       logout,
       refreshToken,
       getCurrentUser,

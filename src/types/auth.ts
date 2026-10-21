@@ -22,6 +22,7 @@ export interface AuthResponse {
   fullName?: string;
   studentOrStaffCode?: string;
   roleName?: string;
+  mustChangePassword?: boolean;
   user?: User;
 }
 
@@ -38,4 +39,5 @@ export interface User {
   role: UserRole;
   status?: string;
   studentOrStaffCode?: string;
+  mustChangePassword?: boolean;
 }

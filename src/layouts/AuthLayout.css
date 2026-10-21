@@ -4,12 +4,19 @@
 
 .auth-language-selector {
   position: absolute;
-  z-index: 1;
+  z-index: 10;
   top: 20px;
   right: 24px;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 900px) {
+  .auth-layout {
+    width: 100%;
+    align-items: flex-start;
+    padding: 16px;
+    overflow-x: hidden;
+  }
+
   .auth-language-selector {
     top: 12px;
     right: 12px;

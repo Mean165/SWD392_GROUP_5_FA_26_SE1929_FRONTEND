@@ -4,6 +4,8 @@ import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import NotFoundPage from '../pages/auth/NotFoundPage';
 import ForbiddenPage from '../pages/auth/ForbiddenPage';
+import ProtectedRoute from './ProtectedRoute';
+import ChangePasswordPage from '../pages/auth/ChangePasswordPage';
 import AdminRoutes from './AdminRoutes';
 import LecturerRoutes from './LecturerRoutes';
 import StudentRoutes from './StudentRoutes';
@@ -16,6 +18,10 @@ export default function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/403" element={<ForbiddenPage />} />
         <Route path="/404" element={<NotFoundPage />} />
+      </Route>
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/change-password" element={<ChangePasswordPage />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/login" replace />} />

@@ -20,7 +20,7 @@ export const register = async (payload: RegisterRequest): Promise<any> => {
  * Chuẩn hóa Role từ Backend (hỗ trợ cả mã AD/LE/ST lẫn ADMIN/LECTURER/STUDENT)
  */
 export const normalizeRole = (rawRole?: string): UserRole => {
-  const role = (rawRole || '').trim().toUpperCase();
+  const role = (rawRole || '').trim().toUpperCase().replace(/^ROLE_/, '');
   if (role === 'AD' || role === 'ADMIN') return 'ADMIN';
   if (role === 'LE' || role === 'LECTURER') return 'LECTURER';
   return 'STUDENT';
@@ -59,6 +59,7 @@ export const login = async (payload: LoginRequest): Promise<AuthResponse> => {
     fullName: authData?.fullName || authData?.user?.fullName || '',
     role,
     studentOrStaffCode: authData?.studentOrStaffCode || authData?.user?.studentOrStaffCode,
+    mustChangePassword: Boolean(authData?.mustChangePassword),
   };
 
   return {
@@ -70,8 +71,32 @@ export const login = async (payload: LoginRequest): Promise<AuthResponse> => {
     fullName: authData?.fullName,
     studentOrStaffCode: authData?.studentOrStaffCode,
     roleName: role,
+    mustChangePassword: Boolean(authData?.mustChangePassword),
     user,
   };
+};
+
+export const changePassword = async (newPassword: string): Promise<AuthResponse> => {
+  const response = await apiClient.post('/auth/change-password', { newPassword });
+  const resData = response.data;
+  const authData = resData?.data ?? resData;
+
+  if (authData?.accessToken) {
+    localStorage.setItem('accessToken', authData.accessToken);
+  }
+
+  const role = normalizeRole(authData?.roleName || authData?.user?.role?.roleCode || authData?.user?.roleName);
+  const user: User = {
+    id: authData?.userId || authData?.user?.userId || 1,
+    userId: authData?.userId || authData?.user?.userId,
+    email: authData?.email || authData?.user?.email || '',
+    fullName: authData?.fullName || authData?.user?.fullName || '',
+    role,
+    studentOrStaffCode: authData?.studentOrStaffCode || authData?.user?.studentOrStaffCode,
+    mustChangePassword: Boolean(authData?.mustChangePassword),
+  };
+
+  return { ...authData, user } as AuthResponse;
 };
 
 export const logout = async (): Promise<void> => {

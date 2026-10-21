@@ -6,9 +6,7 @@ import LecturerDashboardPage from '../pages/lecturer/DashboardPage';
 import CoursesPage from '../pages/lecturer/CoursesPage';
 import QuestionBankPage from '../pages/lecturer/questions/QuestionBankPage';
 import QuestionDetailPage from '../pages/lecturer/questions/QuestionDetailPage';
-import CreateQuestionPage from '../pages/lecturer/questions/CreateQuestionPage';
 import EditQuestionPage from '../pages/lecturer/questions/EditQuestionPage';
-import ImportQuestionPage from '../pages/lecturer/questions/ImportQuestionPage';
 import GenerateQuestionPage from '../pages/lecturer/questions/GenerateQuestionPage';
 import QuestionReviewPage from '../pages/lecturer/questions/QuestionReviewPage';
 import RubricPage from '../pages/lecturer/questions/RubricPage';
@@ -36,8 +34,6 @@ export default function LecturerRoutes() {
           <Route path="dashboard" element={<LecturerDashboardPage />} />
           <Route path="courses" element={<CoursesPage />} />
           <Route path="questions" element={<QuestionBankPage />} />
-          <Route path="questions/create" element={<CreateQuestionPage />} />
-          <Route path="questions/import" element={<ImportQuestionPage />} />
           <Route path="questions/generate" element={<GenerateQuestionPage />} />
           <Route path="questions/review" element={<QuestionReviewPage />} />
           <Route path="questions/:id" element={<QuestionDetailPage />} />

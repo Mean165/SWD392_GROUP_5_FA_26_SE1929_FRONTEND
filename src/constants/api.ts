@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
   },
   user: '/user',
   question: '/question',
+  questionGeneration: '/question-generation',
   exam: '/exam',
   interview: '/interviews',
   evaluation: '/evaluation',

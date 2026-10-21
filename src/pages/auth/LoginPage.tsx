@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useLanguage } from '../../context/LanguageContext';
+import LanguageSelector from '../../components/common/LanguageSelector';
 import './LoginPage.css';
 
 /**
@@ -65,6 +66,27 @@ export default function LoginPage() {
   // State trạng thái tải dữ liệu và thông báo lỗi
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showIntroduction, setShowIntroduction] = useState(false);
+  const [isWelcoming, setIsWelcoming] = useState(false);
+  const [welcomeName, setWelcomeName] = useState('');
+  const [destination, setDestination] = useState('');
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const mediaQuery = window.matchMedia('(max-width: 900px)');
+    const updateLayout = () => setIsCompactLayout(mediaQuery.matches);
+    updateLayout();
+    mediaQuery.addEventListener('change', updateLayout);
+    return () => mediaQuery.removeEventListener('change', updateLayout);
+  }, []);
+
+  useEffect(() => {
+    if (!isWelcoming || !destination) return undefined;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const timeout = window.setTimeout(() => navigate(destination, { replace: true }), reducedMotion ? 650 : 1500);
+    return () => window.clearTimeout(timeout);
+  }, [destination, isWelcoming, navigate]);
 
   // Xử lý sự kiện đăng nhập khi người dùng nhấn nút Submit
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -76,15 +98,23 @@ export default function LoginPage() {
       // Gửi yêu cầu đăng nhập tới API /api/auth/login
       const loggedInUser = await login({ email: email.trim(), password });
 
-      // Điều hướng người dùng dựa theo Role trả về từ backend
-      const role = loggedInUser?.role;
-      if (role === 'ADMIN') {
-        navigate('/admin/dashboard', { replace: true });
-      } else if (role === 'LECTURER') {
-        navigate('/lecturer/dashboard', { replace: true });
-      } else {
-        navigate('/student/dashboard', { replace: true });
+      if (loggedInUser.mustChangePassword) {
+        navigate('/change-password', { replace: true });
+        return;
       }
+
+      // Keep the welcome state visible before entering the role-specific area.
+      const role = loggedInUser?.role;
+      let nextPath = '/student/dashboard';
+      if (role === 'ADMIN') {
+        nextPath = '/admin/dashboard';
+      } else if (role === 'LECTURER') {
+        nextPath = '/lecturer/dashboard';
+      }
+      setWelcomeName(loggedInUser?.fullName?.trim() || email.trim());
+      setDestination(nextPath);
+      setShowIntroduction(true);
+      setIsWelcoming(true);
     } catch (error: any) {
       // Xử lý lỗi và hiển thị thông báo rõ ràng cho người dùng
       setErrorMessage(extractErrorMessage(error));
@@ -94,150 +124,163 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-card">
-      {/* Header của Card: Biểu tượng thi cử, Tiêu đề & Phụ đề */}
-      <div className="login-header">
-        <div className="login-logo-icon" aria-hidden="true">
-          {/* SVG Biểu tượng công nghệ / thi cử */}
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-            <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
-          </svg>
-        </div>
-        <h1 className="login-title">AI Oral Examination</h1>
-        <p className="login-subtitle">{t('Hệ thống thi vấn đáp trực tuyến hỗ trợ bởi AI')}</p>
-      </div>
+    <main className={`login-screen${showIntroduction ? ' show-introduction' : ''}${isWelcoming ? ' is-welcoming' : ''}`}>
+      <div className="login-language-control"><LanguageSelector /></div>
+      <section
+        className="login-panel"
+        aria-label={t('Đăng nhập')}
+        aria-hidden={false}
+      >
+        <div className="login-card">
+          <div className={`login-form-content${isWelcoming ? ' is-hidden' : ''}`} aria-hidden={isWelcoming}>
+            <div className="login-header">
+              <div className="login-brand-row">
+                <div className="login-logo-icon" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                    <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
+                  </svg>
+                </div>
+                <div className="login-brand-copy">
+                  <strong>AiViva</strong>
+                  <span>{t('Hệ thống thi vấn đáp trực tuyến hỗ trợ bởi AI')}</span>
+                </div>
+              </div>
+              <h1 className="login-title">{t('Đăng nhập')}</h1>
+              <p className="login-subtitle">{t('Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục.')}</p>
+            </div>
 
-      {/* Hiển thị thông báo lỗi nếu có */}
-      {errorMessage && (
-        <div className="login-error-alert" role="alert">
-          <svg
-            className="login-error-icon"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <span>{t(errorMessage)}</span>
-        </div>
-      )}
-
-      {/* Form đăng nhập */}
-      <form onSubmit={handleSubmit} className="login-form">
-        {/* Ô nhập Email */}
-        <div className="form-group">
-          <label htmlFor="email" className="form-label">
-            {t('Email')}
-          </label>
-          <input
-            id="email"
-            type="text"
-            className="form-input"
-            placeholder="example@fpt.edu.vn"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
-            required
-            autoComplete="email"
-          />
-        </div>
-
-        {/* Ô nhập Mật khẩu kèm nút ẩn/hiện mật khẩu */}
-        <div className="form-group">
-          <label htmlFor="password" className="form-label">
-            {t('Mật khẩu')}
-          </label>
-          <div className="password-input-wrapper">
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              className="form-input password-input"
-              placeholder={t('Nhập mật khẩu')}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-              required
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              className="toggle-password-btn"
-              onClick={() => setShowPassword((prev) => !prev)}
-              disabled={isLoading}
-              aria-label={t(showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu')}
-              title={t(showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu')}
-            >
-              {showPassword ? (
-                /* Icon ẩn mật khẩu (mắt gạch chéo) */
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                  <line x1="1" y1="1" x2="23" y2="23" />
+            {errorMessage && (
+              <div className="login-error-alert" role="alert">
+                <svg className="login-error-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
-              ) : (
-                /* Icon hiện mật khẩu (mắt) */
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-            </button>
+                <span>{t(errorMessage)}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="login-form">
+              <div className="form-group">
+                <label htmlFor="email" className="form-label">{t('Email')}</label>
+                <div className="login-input-shell">
+                  <span className="login-input-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg>
+                  </span>
+                  <input
+                    id="email"
+                    type="email"
+                    className="form-input has-leading-icon"
+                    placeholder={t('Nhập email')}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading || isWelcoming}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="password" className="form-label">{t('Mật khẩu')}</label>
+                <div className="password-input-wrapper">
+                  <span className="login-input-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3" /></svg>
+                  </span>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    className="form-input password-input has-leading-icon"
+                    placeholder={t('Nhập mật khẩu')}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading || isWelcoming}
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className="toggle-password-btn"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    disabled={isLoading || isWelcoming}
+                    aria-label={t(showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu')}
+                    title={t(showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu')}
+                  >
+                    {showPassword ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="forgot-password-row">
+                <Link to="/404" className="forgot-password-link" tabIndex={isWelcoming ? -1 : undefined}>{t('Quên mật khẩu?')}</Link>
+              </div>
+              <button type="submit" className="login-submit-btn" disabled={isLoading || isWelcoming}>
+                {isLoading ? t('Đang đăng nhập...') : t('Đăng nhập')}
+              </button>
+              <div className="register-link-row">
+                <Link to="/register" className="register-link" tabIndex={isWelcoming ? -1 : undefined}>{t('Chưa có tài khoản? Đăng ký ngay')}</Link>
+              </div>
+            </form>
+          </div>
+
+          <div className={`login-welcome${isWelcoming ? ' is-visible' : ''}`} aria-live="polite" aria-hidden={!isWelcoming}>
+            <span className="login-welcome-check" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="m5 12.5 4.5 4.5L19 7" /></svg>
+            </span>
+            <p>{t('Chào mừng')}</p>
+            <h2>{welcomeName}</h2>
+            <span className="login-welcome-caption">{t('Bạn đã đăng nhập thành công.')}</span>
           </div>
         </div>
+      </section>
 
-        {/* Tùy chọn liên kết Quên mật khẩu */}
-        <div className="forgot-password-row">
-          <Link to="/404" className="forgot-password-link">
-            {t('Quên mật khẩu?')}
-          </Link>
+      <aside
+        className="login-feature-panel"
+        id="login-introduction"
+        aria-label={t('Giới thiệu AiViva')}
+        aria-hidden={isCompactLayout && !showIntroduction}
+      >
+        <div className="login-feature-image" aria-hidden="true">
+          <img src="/images/login-study.jpg" alt="" />
         </div>
-
-        {/* Nút Submit lớn màu xanh dương */}
-        <button type="submit" className="login-submit-btn" disabled={isLoading}>
-          {isLoading ? t('Đang đăng nhập...') : t('Đăng nhập')}
-        </button>
-
-        {/* Tùy chọn liên kết Đăng ký tài khoản */}
-        <div className="register-link-row">
-          <Link to="/register" className="register-link">
-            {t('Chưa có tài khoản? Đăng ký ngay')}
-          </Link>
+        <div className="login-feature-copy">
+          <p className="login-feature-eyebrow">AiViva</p>
+          <h2><span>AI</span> Oral Examination</h2>
+          <p className="login-feature-description">{t('Hệ thống thi vấn đáp trực tuyến hỗ trợ bởi AI')}</p>
+          <ul className="login-feature-list">
+            <li>
+              <span className="login-feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="m13 2-9 12h7l-1 8 10-13h-7l1-7Z" /></svg>
+              </span>
+              <span><strong>{t('Thiết kế đề thi linh hoạt')}</strong><small>{t('Tạo đề thi nhanh chóng theo chủ đề.')}</small></span>
+            </li>
+            <li>
+              <span className="login-feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M9 4a3 3 0 0 0-5 2v1a3 3 0 0 0-1 5 3.5 3.5 0 0 0 2 6 3 3 0 0 0 5 2V4Zm6 0a3 3 0 0 1 5 2v1a3 3 0 0 1 1 5 3.5 3.5 0 0 1-2 6 3 3 0 0 1-5 2V4Z" /><path d="M8 9h1m-1 6h1m6-6h1m-1 6h1" /></svg>
+              </span>
+              <span><strong>{t('Hỗ trợ đánh giá bởi AI')}</strong><small>{t('Đánh giá nhất quán và khách quan với AI hỗ trợ.')}</small></span>
+            </li>
+            <li>
+              <span className="login-feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z" /><path d="m9 12 2 2 4-4" /></svg>
+              </span>
+              <span><strong>{t('An toàn & Bảo mật')}</strong><small>{t('Bảo vệ dữ liệu và quyền riêng tư người học.')}</small></span>
+            </li>
+          </ul>
         </div>
-      </form>
-    </div>
+      </aside>
+
+    </main>
   );
 }

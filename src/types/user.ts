@@ -6,6 +6,48 @@ export interface RoleResponse {
   createdAt?: string;
 }
 
+export type RoleCode = 'AD' | 'LE' | 'ST';
+export type ManagedRoleCode = 'LE' | 'ST';
+
+export interface RoleSummary {
+  roleId: string;
+  roleCode: RoleCode;
+  roleName: string;
+  description: string | null;
+  createdAt: string | null;
+}
+
+export interface AdminUser {
+  userId: string;
+  fullName: string;
+  email: string;
+  studentOrStaffCode: string | null;
+  isActive: boolean;
+  createdAt: string | null;
+  roleName: string;
+  role: RoleSummary;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface AdminUserQuery {
+  page: number;
+  size: number;
+  keyword?: string;
+  roleCode?: ManagedRoleCode;
+  isActive?: boolean;
+}
+
+export interface PasswordResetRequest {
+  newPassword: string;
+}
+
 export interface UserResponse {
   userId: string;
   fullName: string;
@@ -31,13 +73,13 @@ export interface UserFilterRequest {
 export interface CreateUserRequest {
   fullName: string;
   email: string;
-  roleCode?: string; // 'AD' | 'LE' | 'ST'
+  roleCode: ManagedRoleCode;
 }
 
 export interface UpdateUserRequest {
   fullName?: string;
   email?: string;
-  roleCode?: string; // 'AD' | 'LE' | 'ST'
+  roleCode?: ManagedRoleCode;
   isActive?: boolean;
 }
 

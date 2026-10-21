@@ -1,201 +1,93 @@
-import React, { useState } from 'react';
+import { useState, type FormEvent } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { createUser } from '../../services/userService';
+import type { ManagedRoleCode } from '../../types/user';
+import { getAdminErrorMessage, isAdminUnauthorized } from '../../utils/adminError';
 
 interface CreateUserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (message: string) => void;
+  onUnauthorized?: () => void | Promise<void>;
 }
 
-interface FormErrors {
-  fullName?: string;
-  email?: string;
-  roleCode?: string;
-  general?: string;
-}
-
-export default function CreateUserModal({ isOpen, onClose, onSuccess }: CreateUserModalProps) {
+export default function CreateUserModal({ isOpen, onClose, onSuccess, onUnauthorized }: CreateUserModalProps) {
+  const { t } = useLanguage();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [roleCode, setRoleCode] = useState('LE'); // Mặc định Lecturer
+  const [roleCode, setRoleCode] = useState<ManagedRoleCode>('LE');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errorMessage, setErrorMessage] = useState('');
 
   if (!isOpen) return null;
 
-  const validate = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!fullName.trim()) {
-      newErrors.fullName = 'Vui lòng nhập Họ và tên';
-    }
-
-    if (!email.trim()) {
-      newErrors.email = 'Vui lòng nhập Email';
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) {
-        newErrors.email = 'Email không đúng định dạng';
-      }
-    }
-
-    if (!roleCode) {
-      newErrors.roleCode = 'Vui lòng chọn vai trò (Role)';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const close = () => {
+    if (isSubmitting) return;
+    setErrorMessage('');
+    onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!fullName.trim()) {
+      setErrorMessage(t('Nhập họ và tên'));
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErrorMessage(t('Email không hợp lệ.'));
+      return;
+    }
     setIsSubmitting(true);
-    setErrors({});
-
+    setErrorMessage('');
     try {
       await createUser({
         fullName: fullName.trim(),
         email: email.trim().toLowerCase(),
         roleCode,
       });
-
-      // Reset form
       setFullName('');
       setEmail('');
       setRoleCode('LE');
-
-      // Thông báo thành công và đóng modal
-      onSuccess('Tạo người dùng thành công!');
+      onSuccess(t('Tài khoản đã được tạo và thông tin đã được gửi qua email.'));
       onClose();
-    } catch (err: any) {
-      const serverMessage =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Không thể tạo người dùng. Vui lòng thử lại.';
-      setErrors({ general: serverMessage });
+    } catch (error) {
+      if (isAdminUnauthorized(error)) void onUnauthorized?.();
+      setErrorMessage(getAdminErrorMessage(error, t));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleClose = () => {
-    if (isSubmitting) return;
-    setErrors({});
-    onClose();
-  };
-
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div
-        className="modal-container"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="create-user-modal-title"
-      >
-        <div className="modal-header">
-          <h3 id="create-user-modal-title" className="modal-title">
-            Tạo tài khoản
-          </h3>
-          <button
-            type="button"
-            className="modal-close-btn"
-            onClick={handleClose}
-            disabled={isSubmitting}
-            aria-label="Đóng"
-          >
-            ✕
-          </button>
-        </div>
-
-        {errors.general && (
-          <div className="alert-message alert-error" role="alert">
-            {errors.general}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="modal-form" noValidate>
+    <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
+      <section className="modal-container" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
+        <header className="modal-header">
+          <h2 className="modal-title" id="create-user-title">{t('Tạo tài khoản')}</h2>
+          <button type="button" className="modal-close-btn" onClick={close} disabled={isSubmitting} aria-label={t('Đóng')}>×</button>
+        </header>
+        <form className="modal-form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+          {errorMessage && <div className="alert-message alert-error" role="alert">{errorMessage}</div>}
           <div className="form-group">
-            <label htmlFor="create-full-name" className="form-label">
-              Họ và tên <span className="text-required">*</span>
-            </label>
-            <input
-              id="create-full-name"
-              type="text"
-              className={`form-input ${errors.fullName ? 'input-error' : ''}`}
-              placeholder="Nhập họ và tên"
-              value={fullName}
-              onChange={(e) => {
-                setFullName(e.target.value);
-                if (errors.fullName) setErrors((prev) => ({ ...prev, fullName: undefined }));
-              }}
-              disabled={isSubmitting}
-            />
-            {errors.fullName && <p className="field-error-text">{errors.fullName}</p>}
+            <label className="form-label" htmlFor="create-full-name">{t('Họ và tên')}</label>
+            <input id="create-full-name" className="form-input" type="text" value={fullName} autoComplete="name" onChange={(event) => setFullName(event.target.value)} disabled={isSubmitting} required />
           </div>
-
           <div className="form-group">
-            <label htmlFor="create-email" className="form-label">
-              Email <span className="text-required">*</span>
-            </label>
-            <input
-              id="create-email"
-              type="email"
-              className={`form-input ${errors.email ? 'input-error' : ''}`}
-              placeholder="email@example.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
-              }}
-              disabled={isSubmitting}
-            />
-            {errors.email && <p className="field-error-text">{errors.email}</p>}
+            <label className="form-label" htmlFor="create-email">Email</label>
+            <input id="create-email" className="form-input" type="email" value={email} autoComplete="email" onChange={(event) => setEmail(event.target.value)} disabled={isSubmitting} required />
           </div>
-
           <div className="form-group">
-            <label htmlFor="create-role" className="form-label">
-              Vai trò <span className="text-required">*</span>
-            </label>
-            <select
-              id="create-role"
-              className={`form-select ${errors.roleCode ? 'input-error' : ''}`}
-              value={roleCode}
-              onChange={(e) => {
-                setRoleCode(e.target.value);
-                if (errors.roleCode) setErrors((prev) => ({ ...prev, roleCode: undefined }));
-              }}
-              disabled={isSubmitting}
-            >
-              <option value="AD">Quản trị viên</option>
-              <option value="LE">Giảng viên</option>
-              <option value="ST">Sinh viên</option>
+            <label className="form-label" htmlFor="create-role">{t('Vai trò')}</label>
+            <select id="create-role" className="form-select" value={roleCode} onChange={(event) => setRoleCode(event.target.value as ManagedRoleCode)} disabled={isSubmitting}>
+              <option value="LE">{t('Giảng viên')}</option>
+              <option value="ST">{t('Sinh viên')}</option>
             </select>
-            {errors.roleCode && <p className="field-error-text">{errors.roleCode}</p>}
           </div>
-
           <div className="modal-footer">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting}
-              id="btn-submit-create-user"
-            >
-              {isSubmitting ? 'Đang tạo…' : 'Tạo tài khoản'}
-            </button>
+            <button type="button" className="btn btn-secondary" onClick={close} disabled={isSubmitting}>{t('Hủy')}</button>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>{isSubmitting ? t('Đang lưu…') : t('Tạo tài khoản')}</button>
           </div>
         </form>
-      </div>
+      </section>
     </div>
   );
 }

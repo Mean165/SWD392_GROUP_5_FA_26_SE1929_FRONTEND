@@ -19,7 +19,7 @@ export default function LecturerDashboardPage() {
       <div className="lecturer-dashboard-grid">
         <Link to={APP_ROUTES.lecturer.courses}><span>▣</span><strong>{t('Môn học')}</strong><small>{t('Xem các môn học và lớp được phân công.')}</small></Link>
         <Link to={APP_ROUTES.lecturer.exams}><span>▦</span><strong>{t('Kỳ thi & lịch thi')}</strong><small>{t('Tạo phiên thi, quản lý lịch và danh sách thí sinh.')}</small></Link>
-        <Link to={APP_ROUTES.lecturer.questions}><span>▤</span><strong>{t('Ngân hàng câu hỏi')}</strong><small>{t('Soạn câu hỏi, nhập nội dung hoặc chuẩn bị sinh câu hỏi AI.')}</small></Link>
+        <Link to={APP_ROUTES.lecturer.questions}><span>▤</span><strong>{t('Ngân hàng câu hỏi')}</strong><small>{t('Quản lý câu hỏi, duyệt bản nháp và tạo câu hỏi AI theo tài liệu môn học.')}</small></Link>
         <Link to={APP_ROUTES.lecturer.evaluations}><span>✓</span><strong>{t('Chấm điểm')}</strong><small>{t('Rà soát gợi ý AI và xác nhận điểm cuối cùng.')}</small></Link>
         <Link to={APP_ROUTES.lecturer.monitoring}><span>◉</span><strong>{t('Giám sát thi')}</strong><small>{t('Kiểm tra trạng thái phiên, nhật ký và bản ghi khi khả dụng.')}</small></Link>
         <Link to={APP_ROUTES.lecturer.reports}><span>↗</span><strong>{t('Báo cáo')}</strong><small>{t('Xem báo cáo lớp, thống kê câu hỏi và xuất điểm.')}</small></Link>

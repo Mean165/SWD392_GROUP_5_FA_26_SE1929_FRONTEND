@@ -1,19 +1,20 @@
+import { Link } from 'react-router-dom';
+import PageHeader from '../../../components/common/PageHeader';
 import { APP_ROUTES } from '../../../constants/routes';
-import WorkflowPage from '../../../components/common/WorkflowPage';
+import { useLanguage } from '../../../context/LanguageContext';
+import QuestionReviewList from './QuestionReviewList';
+import './question-generation.css';
 
 export default function QuestionReviewPage() {
-  return <WorkflowPage
-    title="Duyệt câu hỏi AI"
-    description="Rà soát bản nháp AI/RAG, đối chiếu nguồn và phê duyệt trước khi sử dụng."
-    category="KIỂM DUYỆT NỘI DUNG"
-    capabilities={[
-      'Bản nháp cần hiển thị nguồn tài liệu, mức Bloom, rubric và lịch sử chỉnh sửa.',
-      'Giảng viên có thể duyệt, sửa hoặc từ chối sau khi API phê duyệt được tích hợp.',
-      'Chưa có service tạo hoặc phê duyệt câu hỏi; không có câu hỏi AI giả trong danh sách.',
-    ]}
-    related={[
-      { label: 'Sinh câu hỏi AI / RAG', to: APP_ROUTES.lecturer.questionsGenerate },
-      { label: 'Ngân hàng câu hỏi', to: APP_ROUTES.lecturer.questions },
-    ]}
-  />;
+  const { t } = useLanguage();
+  return (
+    <main className="qg-page">
+      <PageHeader title="Duyệt câu hỏi AI" description="Rà soát bản nháp, chỉnh sửa nội dung, rồi duyệt hoặc từ chối." />
+      <QuestionReviewList />
+      <div className="qg-inline-actions">
+        <Link className="qg-text-link" to={APP_ROUTES.lecturer.questionsGenerate}>{t('Tạo câu hỏi AI / RAG')}</Link>
+        <Link className="qg-button qg-button-secondary" to={APP_ROUTES.lecturer.questionList}>{t('Câu hỏi trong ngân hàng')}</Link>
+      </div>
+    </main>
+  );
 }

@@ -49,6 +49,10 @@
   background: #2866db;
 }
 
+.admin-dashboard-primary svg {
+  flex: 0 0 auto;
+}
+
 .admin-dashboard-users-panel,
 .admin-dashboard-quick-links {
   padding: 19px;
@@ -115,6 +119,12 @@
   color: #3478ef;
   background: #edf4ff;
   font-size: 18px;
+}
+
+.admin-stat-icon svg,
+.admin-dashboard-link-grid a > span svg {
+  width: 18px;
+  height: 18px;
 }
 
 .admin-stat-card:nth-child(2) .admin-stat-icon,
@@ -218,6 +228,10 @@
   color: #3478ef;
   background: #edf4ff;
   font-size: 16px;
+}
+
+.admin-dashboard-link-grid a > b svg {
+  display: block;
 }
 
 .admin-dashboard-link-grid strong {

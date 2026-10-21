@@ -1,296 +1,121 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { getUserById, updateUser } from '../../services/userService';
-import type { UserResponse } from '../../types/user';
+import type { ManagedRoleCode, UserResponse } from '../../types/user';
+import { getAdminErrorMessage, isAdminUnauthorized } from '../../utils/adminError';
 
 interface EditUserModalProps {
   isOpen: boolean;
   userId: string | null;
   onClose: () => void;
-  onSuccess: (message: string) => void;
+  onSuccess: (message: string, updatedUser: UserResponse) => void;
+  onUnauthorized?: () => void | Promise<void>;
 }
 
-interface FormErrors {
-  fullName?: string;
-  email?: string;
-  roleCode?: string;
-  general?: string;
-}
-
-export default function EditUserModal({ isOpen, userId, onClose, onSuccess }: EditUserModalProps) {
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+export default function EditUserModal({ isOpen, userId, onClose, onSuccess, onUnauthorized }: EditUserModalProps) {
+  const { t } = useLanguage();
+  const [user, setUser] = useState<UserResponse | null>(null);
+  const [roleCode, setRoleCode] = useState<ManagedRoleCode>('LE');
+  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [roleCode, setRoleCode] = useState('LE');
-  const [studentOrStaffCode, setStudentOrStaffCode] = useState('');
-  const [isActive, setIsActive] = useState<boolean>(true);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // Tải thông tin chi tiết User từ API GET /api/users/{id} khi mở modal
   useEffect(() => {
-    if (!isOpen || !userId) {
-      return;
-    }
-
-    let isMounted = true;
-    setIsLoadingDetails(true);
-    setErrors({});
-
+    if (!isOpen || !userId) return undefined;
+    let active = true;
+    setUser(null);
+    setIsLoading(true);
+    setErrorMessage('');
     getUserById(userId)
-      .then((data: UserResponse) => {
-        if (!isMounted) return;
-        setFullName(data.fullName || '');
-        setEmail(data.email || '');
-        setStudentOrStaffCode(data.studentOrStaffCode || '');
-
-        const rawRole = (data.role?.roleCode || data.roleName || 'ST').toUpperCase();
-        if (rawRole === 'AD' || rawRole === 'ADMIN') {
-          setRoleCode('AD');
-        } else if (rawRole === 'LE' || rawRole === 'LECTURER') {
-          setRoleCode('LE');
-        } else {
-          setRoleCode('ST');
+      .then((result) => {
+        if (!active) return;
+        setUser(result);
+        const role = (result.role?.roleCode || result.roleName || '').toUpperCase();
+        if (role === 'AD' || role === 'ADMIN') {
+          setErrorMessage(t('Không thể chỉnh sửa tài khoản Admin trong mục này.'));
+          return;
         }
-
-        setIsActive(data.isActive !== undefined ? data.isActive : true);
+        setRoleCode(role === 'LE' || role === 'LECTURER' ? 'LE' : 'ST');
       })
-      .catch((err: any) => {
-        if (!isMounted) return;
-        const msg =
-          err?.response?.data?.message ||
-          err?.message ||
-          'Không thể tải thông tin chi tiết người dùng.';
-        setErrors({ general: msg });
+      .catch((error: unknown) => {
+        if (!active) return;
+        setErrorMessage(getAdminErrorMessage(error, t));
+        if (isAdminUnauthorized(error)) void onUnauthorized?.();
       })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoadingDetails(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen, userId]);
+      .finally(() => { if (active) setIsLoading(false); });
+    return () => { active = false; };
+  }, [isOpen, onUnauthorized, t, userId]);
 
   if (!isOpen) return null;
 
-  const validate = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!fullName.trim()) {
-      newErrors.fullName = 'Vui lòng nhập Họ và tên';
-    }
-
-    if (!email.trim()) {
-      newErrors.email = 'Vui lòng nhập Email';
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) {
-        newErrors.email = 'Email không đúng định dạng';
-      }
-    }
-
-    if (!roleCode) {
-      newErrors.roleCode = 'Vui lòng chọn vai trò (Role)';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const close = () => {
+    if (isSubmitting) return;
+    setErrorMessage('');
+    onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userId || !validate()) return;
-
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!userId || !user) return;
+    const role = (user.role?.roleCode || user.roleName || '').toUpperCase();
+    if (role === 'AD' || role === 'ADMIN') {
+      setErrorMessage(t('Không thể chỉnh sửa tài khoản Admin trong mục này.'));
+      return;
+    }
     setIsSubmitting(true);
-    setErrors({});
-
+    setErrorMessage('');
     try {
-      await updateUser(userId, {
-        fullName: fullName.trim(),
-        email: email.trim().toLowerCase(),
-        roleCode,
-        isActive,
-      });
-
-      onSuccess('Cập nhật người dùng thành công!');
+      const updatedUser = await updateUser(userId, { roleCode });
+      onSuccess(t('Thông tin tài khoản đã được cập nhật.'), updatedUser);
       onClose();
-    } catch (err: any) {
-      const serverMessage =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Không thể cập nhật người dùng. Vui lòng thử lại.';
-      setErrors({ general: serverMessage });
+    } catch (error) {
+      setErrorMessage(getAdminErrorMessage(error, t));
+      if (isAdminUnauthorized(error)) void onUnauthorized?.();
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleClose = () => {
-    if (isSubmitting) return;
-    setErrors({});
-    onClose();
-  };
-
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div
-        className="modal-container"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="edit-user-modal-title"
-      >
-        <div className="modal-header">
-          <h3 id="edit-user-modal-title" className="modal-title">
-            Chỉnh sửa tài khoản
-          </h3>
-          <button
-            type="button"
-            className="modal-close-btn"
-            onClick={handleClose}
-            disabled={isSubmitting}
-            aria-label="Đóng"
-          >
-            ✕
-          </button>
-        </div>
-
-        {errors.general && (
-          <div className="alert-message alert-error" role="alert">
-            {errors.general}
-          </div>
-        )}
-
-        {isLoadingDetails ? (
-          <div className="modal-loading-state">
-            <span className="loading-spinner" />
-            <p className="loading-text">Đang tải thông tin người dùng...</p>
-          </div>
+    <div className="modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
+      <section className="modal-container" role="dialog" aria-modal="true" aria-labelledby="edit-user-title">
+        <header className="modal-header">
+          <h2 className="modal-title" id="edit-user-title">{t('Chỉnh sửa tài khoản')}</h2>
+          <button type="button" className="modal-close-btn" onClick={close} disabled={isSubmitting} aria-label={t('Đóng')}>×</button>
+        </header>
+        {isLoading ? (
+          <div className="state-container" role="status"><div className="loading-spinner" /><p>{t('Đang tải thông tin tài khoản…')}</p></div>
         ) : (
-          <form onSubmit={handleSubmit} className="modal-form" noValidate>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label className="form-label text-muted">Mã tài khoản</label>
-                <input
-                  type="text"
-                  className="form-input input-readonly"
-                  value={userId || ''}
-                  readOnly
-                  disabled
-                />
+          <form className="modal-form" onSubmit={(event) => void handleSubmit(event)} noValidate>
+            {errorMessage && <div className="alert-message alert-error" role="alert">{errorMessage}</div>}
+            {user && <>
+              <div className="form-group">
+                <label className="form-label" htmlFor="edit-account-code">{t('Mã cán bộ/SV')}</label>
+                <input id="edit-account-code" className="form-input input-readonly" value={user.studentOrStaffCode || '—'} readOnly disabled />
               </div>
-              {studentOrStaffCode && (
-                <div className="form-group" style={{ width: '130px' }}>
-                  <label className="form-label text-muted">Mã cán bộ/SV</label>
-                  <input
-                    type="text"
-                    className="form-input input-readonly font-medium"
-                    value={studentOrStaffCode}
-                    readOnly
-                    disabled
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-full-name" className="form-label">
-                Họ và tên <span className="text-required">*</span>
-              </label>
-              <input
-                id="edit-full-name"
-                type="text"
-                className={`form-input ${errors.fullName ? 'input-error' : ''}`}
-                placeholder="Nhập họ và tên"
-                value={fullName}
-                onChange={(e) => {
-                  setFullName(e.target.value);
-                  if (errors.fullName) setErrors((prev) => ({ ...prev, fullName: undefined }));
-                }}
-                disabled={isSubmitting}
-              />
-              {errors.fullName && <p className="field-error-text">{errors.fullName}</p>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-email" className="form-label">
-                Email <span className="text-required">*</span>
-              </label>
-              <input
-                id="edit-email"
-                type="email"
-                className={`form-input ${errors.email ? 'input-error' : ''}`}
-                placeholder="email@example.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
-                }}
-                disabled={isSubmitting}
-              />
-              {errors.email && <p className="field-error-text">{errors.email}</p>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-role" className="form-label">
-                Vai trò <span className="text-required">*</span>
-              </label>
-              <select
-                id="edit-role"
-                className={`form-select ${errors.roleCode ? 'input-error' : ''}`}
-                value={roleCode}
-                onChange={(e) => {
-                  setRoleCode(e.target.value);
-                  if (errors.roleCode) setErrors((prev) => ({ ...prev, roleCode: undefined }));
-                }}
-                disabled={isSubmitting}
-              >
-                <option value="AD">Quản trị viên</option>
-                <option value="LE">Giảng viên</option>
-                <option value="ST">Sinh viên</option>
-              </select>
-              {errors.roleCode && <p className="field-error-text">{errors.roleCode}</p>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="edit-status" className="form-label">
-                Trạng thái
-              </label>
-              <select
-                id="edit-status"
-                className="form-select"
-                value={isActive ? 'active' : 'inactive'}
-                onChange={(e) => setIsActive(e.target.value === 'active')}
-                disabled={isSubmitting}
-              >
-                <option value="active">Hoạt động</option>
-                <option value="inactive">Đã khóa</option>
-              </select>
-            </div>
-
+              <div className="form-group">
+                <label className="form-label" htmlFor="edit-full-name">{t('Họ và tên')}</label>
+                <input id="edit-full-name" className="form-input input-readonly" value={user.fullName || ''} autoComplete="name" readOnly />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="edit-email">Email</label>
+                <input id="edit-email" className="form-input input-readonly" type="email" value={user.email || ''} autoComplete="email" readOnly />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="edit-role">{t('Vai trò')}</label>
+                <select id="edit-role" className="form-select" value={roleCode} onChange={(event) => setRoleCode(event.target.value as ManagedRoleCode)} disabled={isSubmitting}>
+                  <option value="LE">{t('Giảng viên')}</option>
+                  <option value="ST">{t('Sinh viên')}</option>
+                </select>
+              </div>
+            </>}
             <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleClose}
-                disabled={isSubmitting}
-              >
-                Hủy
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isSubmitting}
-                id="btn-submit-edit-user"
-              >
-                {isSubmitting ? 'Đang lưu…' : 'Lưu thay đổi'}
-              </button>
+              <button type="button" className="btn btn-secondary" onClick={close} disabled={isSubmitting}>{t('Hủy')}</button>
+              <button type="submit" className="btn btn-primary" disabled={isSubmitting || !user}>{isSubmitting ? t('Đang lưu…') : t('Lưu thay đổi')}</button>
             </div>
           </form>
         )}
-      </div>
+      </section>
     </div>
   );
 }

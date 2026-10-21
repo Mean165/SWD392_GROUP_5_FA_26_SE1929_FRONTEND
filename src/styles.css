@@ -39,9 +39,21 @@ button, input, select, textarea {
   font: inherit;
 }
 
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--aiviva-blue);
+  vertical-align: middle;
+}
+
 :focus-visible {
   outline: 3px solid #8eb5ff;
   outline-offset: 2px;
+}
+
+input[type="checkbox"]:focus-visible {
+  outline-width: 2px;
+  outline-offset: 1px;
 }
 
 .layout-shell {
