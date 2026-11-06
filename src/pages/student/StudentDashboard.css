@@ -124,18 +124,23 @@
 }
 
 .exam-assignment-status.completed {
-  color: #247144;
-  background: #eaf7ef;
+  color: #687791;
+  background: #edf0f4;
 }
 
 .exam-assignment-status.in_progress {
-  color: #815d0c;
-  background: #fff5da;
+  color: #14734e;
+  background: #e5f7ef;
 }
 
 .exam-assignment-status.cancelled {
-  color: #6a6f7a;
-  background: #eceef2;
+  color: #a1261b;
+  background: #ffeaeb;
+}
+
+.exam-assignment-status.absent {
+  color: #8a5900;
+  background: #fff1d8;
 }
 
 .exam-assignment-details {

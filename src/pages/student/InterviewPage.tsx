@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import InterviewRoom from '../../components/interview/InterviewRoom';
 import { APP_ROUTES } from '../../constants/routes';
 import {
   getInterview,
   getInterviewErrorMessage,
   getInterviewErrorStatus,
+  abandonInterview,
   startInterview,
-  submitAnswer,
 } from '../../services/interview/interviewService';
 import type { InterviewResponse, InteractionTurnResponse } from '../../types/interview';
 import { useLanguage } from '../../context/LanguageContext';
@@ -16,24 +16,21 @@ import './InterviewPage.css';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 
-interface RecordedAnswer {
-  turnId: string;
-  audioDataUrl: string;
-}
-
 export default function InterviewPage() {
   const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const isSessionRoute = /\/student\/exams\/[^/]+\/room\/?$/.test(location.pathname);
+  const examAttemptId = new URLSearchParams(location.search).get('examAttemptId');
   const [attempt, setAttempt] = useState<InterviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [recordedAnswer, setRecordedAnswer] = useState<RecordedAnswer | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmedTranscript, setConfirmedTranscript] = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
+  const [abandoning, setAbandoning] = useState(false);
   const submitLockRef = useRef<string | null>(null);
   const routeKeyRef = useRef(location.pathname);
   routeKeyRef.current = location.pathname;
@@ -42,7 +39,7 @@ export default function InterviewPage() {
     if (!id || !UUID_PATTERN.test(id)) {
       throw new Error(t('Mã phiên thi không hợp lệ.'));
     }
-    return isSessionRoute ? startInterview(id, signal) : getInterview(id, signal);
+    return isSessionRoute ? (examAttemptId ? startInterview(examAttemptId, signal) : Promise.reject(new Error(t('Không tìm thấy lượt thi được cấp. Hãy tải lại lịch thi.')))) : getInterview(id, signal);
   };
 
   useEffect(() => {
@@ -51,7 +48,6 @@ export default function InterviewPage() {
     setLoading(true);
     setAttempt(null);
     setLoadError(null);
-    setRecordedAnswer(null);
     setIsSubmitting(false);
     setSubmitError(null);
     setConfirmedTranscript(null);
@@ -75,22 +71,12 @@ export default function InterviewPage() {
       active = false;
       controller.abort();
     };
-  }, [id, isSessionRoute, location.pathname]);
+  }, [id, isSessionRoute, location.pathname, location.search]);
 
   const currentTurn: InteractionTurnResponse | null = attempt?.currentTurn ?? null;
 
-  const handleRecordingReady = (audioDataUrl: string) => {
-    if (!currentTurn) return;
-    setRecordedAnswer({ turnId: currentTurn.turnId, audioDataUrl });
-    setSubmitError(null);
-  };
-
   const handleSubmit = async () => {
     if (submitLockRef.current === location.pathname || isSubmitting || !attempt || !currentTurn) return;
-    if (!recordedAnswer || recordedAnswer.turnId !== currentTurn.turnId) {
-      setSubmitError(t('Hãy tạo bản ghi hợp lệ cho câu hỏi hiện tại trước khi gửi.'));
-      return;
-    }
 
     const submitAttemptId = attempt.attemptId;
     const submitTurnId = currentTurn.turnId;
@@ -100,42 +86,16 @@ export default function InterviewPage() {
     setSubmitError(null);
 
     try {
-      const response = await submitAnswer({
-        attemptId: submitAttemptId,
-        turnId: submitTurnId,
-        audioSegmentUrl: recordedAnswer.audioDataUrl,
-      });
+      const response = await getInterview(submitAttemptId);
       if (routeKeyRef.current !== submitRoute) return;
-      if (response.turnId !== submitTurnId) {
-        setLoadError(t('Máy chủ trả về lượt thi không khớp. Hãy tải lại trạng thái phiên thi trước khi tiếp tục.'));
-        return;
-      }
-
-      setConfirmedTranscript(response.transcriptText);
-      setRecordedAnswer(null);
+      const completedTurn = response.turns.find((turn) => turn.turnId === submitTurnId);
+      setConfirmedTranscript(completedTurn?.transcriptText ?? '');
       setSubmitError(null);
-
-      if (response.completed) {
-        setAttempt({ ...attempt, status: 'COMPLETED', currentTurn: null });
-        setCompleted(true);
-      } else if (response.nextTurn) {
-        setAttempt({ ...attempt, status: 'IN_PROGRESS', currentTurn: response.nextTurn });
-      } else {
-        setAttempt({ ...attempt, currentTurn: null });
-        try {
-          const refreshed = await getInterview(submitAttemptId);
-          if (routeKeyRef.current !== submitRoute) return;
-          setAttempt(refreshed);
-          setCompleted(refreshed.status === 'COMPLETED');
-        } catch {
-          if (routeKeyRef.current === submitRoute) {
-            setLoadError(t('Câu trả lời đã được máy chủ xác nhận, nhưng không tải được lượt tiếp theo. Tải lại trạng thái phiên thi để tiếp tục.'));
-          }
-        }
-      }
+      setAttempt(response);
+      setCompleted(response.status === 'COMPLETED');
     } catch (error) {
       if (routeKeyRef.current === submitRoute) {
-        const message = getInterviewErrorMessage(error, 'submit');
+        const message = getInterviewErrorMessage(error, 'load');
         if (getInterviewErrorStatus(error) === 404 || getInterviewErrorStatus(error) === 410) {
           setLoadError(message);
         } else {
@@ -163,6 +123,17 @@ export default function InterviewPage() {
     }
   };
 
+  const abandonAttempt = async () => {
+    if (!attempt || abandoning || !window.confirm(t('Kết thúc và bỏ lượt thi đang mở? Lượt đã bắt đầu có thể được tính theo chính sách kỳ thi.'))) return;
+    setAbandoning(true);
+    try {
+      await abandonInterview(attempt.attemptId);
+      navigate(APP_ROUTES.student.exams);
+    } catch (error) {
+      setLoadError(getInterviewErrorMessage(error));
+    } finally { setAbandoning(false); }
+  };
+
   const title = t(isSessionRoute ? 'Phòng thi vấn đáp AI' : 'Phiên thi vấn đáp AI');
 
   return (
@@ -172,15 +143,13 @@ export default function InterviewPage() {
         description={id ? `${t('Phiên thi')} ${id}` : t('Không tìm thấy mã phiên thi.')}
         action={{ label: 'Quay lại lịch thi', to: APP_ROUTES.student.exams }}
       />
+      {!loading && !loadError && !completed && attempt && <button type="button" className="interview-abandon-button" disabled={abandoning} onClick={() => void abandonAttempt()}>{t(abandoning ? 'Đang kết thúc lượt thi…' : 'Bỏ lượt thi')}</button>}
 
       {loading && <p className="interview-page-status" role="status">{t('Đang tải trạng thái phiên thi…')}</p>}
 
       {!loading && loadError && (
         <section className="interview-state-card" role="alert">
           <p>{t(loadError)}</p>
-          {recordedAnswer && (
-            <p>{t('Bản ghi vẫn được giữ trong trang này và chưa được tự gửi lại.')}</p>
-          )}
           {confirmedTranscript !== null && (
             <div className="interview-transcript">
               <h3>{t('Phiên âm đã được máy chủ xác nhận')}</h3>
@@ -209,16 +178,14 @@ export default function InterviewPage() {
       {!loading && !loadError && !completed && attempt && currentTurn && (
         <InterviewRoom
           turn={currentTurn}
+          questionPlan={attempt.questionPlan ?? []}
           confirmedTranscript={confirmedTranscript}
-          recordingAvailable={recordedAnswer?.turnId === currentTurn.turnId}
+          recordingAvailable={false}
           isSubmitting={isSubmitting}
           submitError={submitError}
-          onRecordingReady={handleRecordingReady}
+          examAttemptId={attempt.examAttemptId ?? ''}
           onSubmit={handleSubmit}
-          onDiscard={() => {
-            setRecordedAnswer(null);
-            setSubmitError(null);
-          }}
+          onDiscard={() => setSubmitError(null)}
         />
       )}
 

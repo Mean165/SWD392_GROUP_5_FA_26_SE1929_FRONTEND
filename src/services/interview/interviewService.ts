@@ -4,8 +4,6 @@ import apiClient from '../api/apiClient';
 import type { ApiResponse } from '../../types/user';
 import type {
   InterviewResponse,
-  SubmitAnswerPayload,
-  SubmitAnswerResponse,
 } from '../../types/interview';
 
 const unwrapResponse = <T>(response: { data: ApiResponse<T> }): T => {
@@ -15,13 +13,17 @@ const unwrapResponse = <T>(response: { data: ApiResponse<T> }): T => {
   return response.data.data;
 };
 
-export const startInterview = async (sessionId: string, signal?: AbortSignal): Promise<InterviewResponse> => {
+export const startInterview = async (examAttemptId: string, signal?: AbortSignal): Promise<InterviewResponse> => {
   const response = await apiClient.post<ApiResponse<InterviewResponse>>(
     `${API_ENDPOINTS.interview}/start`,
-    { sessionId },
+    { examAttemptId },
     { signal },
   );
   return unwrapResponse(response);
+};
+
+export const abandonInterview = async (interviewAttemptId: string): Promise<void> => {
+  await apiClient.post(`${API_ENDPOINTS.interview}/${encodeURIComponent(interviewAttemptId)}/abandon`);
 };
 
 export const getInterview = async (attemptId: string, signal?: AbortSignal): Promise<InterviewResponse> => {
@@ -41,19 +43,10 @@ export const getTurnSpeech = async (turnId: string, signal?: AbortSignal): Promi
     throw new Error('Máy chủ không trả về tệp âm thanh hợp lệ.');
   }
   const contentType = String(response.headers['content-type'] ?? response.data.type).toLowerCase();
-  if (!contentType.startsWith('audio/mpeg')) {
+  if (!(contentType.startsWith('audio/mpeg') || contentType.startsWith('audio/wav') || contentType.startsWith('audio/wave'))) {
     throw new Error('Máy chủ trả về định dạng âm thanh không hợp lệ.');
   }
   return response.data;
-};
-
-export const submitAnswer = async (payload: SubmitAnswerPayload): Promise<SubmitAnswerResponse> => {
-  const response = await apiClient.post<ApiResponse<SubmitAnswerResponse>>(
-    `${API_ENDPOINTS.interview}/submit-answer`,
-    payload,
-    { timeout: 120_000 },
-  );
-  return unwrapResponse(response);
 };
 
 export const getInterviewErrorStatus = (error: unknown): number | undefined => {
@@ -67,6 +60,18 @@ export const getInterviewErrorMessage = (
   context: InterviewErrorContext = 'load',
 ): string => {
   if (axios.isAxiosError(error)) {
+    const body = error.response?.data as { errorCode?: string; code?: string; message?: string } | undefined;
+    const code = body?.errorCode ?? body?.code;
+    const codeMessages: Record<string, string> = {
+      ATTEMPTS_EXHAUSTED: 'Bạn đã hết lượt thi được cấp.',
+      ATTEMPT_IN_PROGRESS: 'Bạn cần tiếp tục hoặc xử lý lượt thi đang mở.',
+      COOLDOWN_ACTIVE: 'Chưa đến thời gian được phép thi lại.',
+      OUTSIDE_WINDOW: 'Đang ngoài khung giờ thi cho phép.',
+      EXAM_CLOSED: 'Kỳ thi đã đóng.',
+      NOT_ENROLLED: 'Bạn không có quyền trong kỳ thi này.',
+      ACCESS_DENIED: 'Bạn không có quyền truy cập kỳ thi này.',
+    };
+    if (code && codeMessages[code]) return codeMessages[code];
     const status = error.response?.status;
     if (!status) {
       return 'Không thể kết nối đến máy chủ. Hãy kiểm tra mạng rồi thử lại.';

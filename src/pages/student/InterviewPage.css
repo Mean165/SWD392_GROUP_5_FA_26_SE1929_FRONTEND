@@ -15,6 +15,48 @@
   box-shadow: 0 8px 24px rgb(28 43 74 / 5%);
 }
 
+.interview-question-plan {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--aiviva-border, #e5ebf4);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.interview-question-plan h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.interview-question-plan ol {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.interview-question-plan li {
+  padding: 0.55rem 0.7rem;
+  border-left: 2px solid #d7e0ee;
+}
+
+.interview-question-plan li[aria-current='step'] {
+  border-left-color: #3478f6;
+  background: #f3f7ff;
+}
+
+.interview-question-plan-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  color: #52627a;
+  font-size: 0.85rem;
+}
+
+.interview-question-plan p {
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+}
+
 .interview-question-kicker {
   margin: 0 0 0.5rem;
   color: #435c80;
@@ -69,6 +111,48 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.interview-microphone-field {
+  display: grid;
+  gap: 0.4rem;
+  max-width: 420px;
+  margin: 1rem 0;
+  color: #45536b;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.interview-microphone-field select {
+  min-height: 42px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #d5deeb;
+  border-radius: 6px;
+  background: #fff;
+  color: #273a59;
+  font: inherit;
+}
+
+.interview-live-transcript {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid #3478f6;
+  background: #f5f8ff;
+}
+
+.interview-live-transcript h4,
+.interview-live-transcript p {
+  margin: 0;
+}
+
+.interview-live-transcript p {
+  margin-top: 0.45rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.interview-live-transcript .partial {
+  color: #8794a8;
 }
 
 .interview-recorder button:disabled,
@@ -196,3 +280,4 @@
     flex: initial;
   }
 }
+.interview-abandon-button{display:block;margin:0 0 1rem auto;padding:.55rem .8rem;border:1px solid #b42318;border-radius:6px;background:#fff;color:#a1261b;font:inherit;font-weight:600;cursor:pointer}.interview-abandon-button:disabled{opacity:.55;cursor:wait}

@@ -8,6 +8,7 @@ import {
 } from '../../services/exam/studentExamAssignmentApi';
 import type { ExamEntryEligibility, StudentExamAssignment } from '../../types/exam';
 import { useLanguage } from '../../context/LanguageContext';
+import type { StudentExamScheduleError } from '../../services/exam/studentExamAssignmentApi';
 import { StudentNotice, StudentPageHeader } from './StudentPages';
 
 const dateInputValue = (date: Date) => {
@@ -16,10 +17,12 @@ const dateInputValue = (date: Date) => {
 };
 
 const statusLabels: Record<string, string> = {
-  PENDING: 'Chờ xác nhận',
-  SCHEDULED: 'Đã lên lịch',
-  IN_PROGRESS: 'Đang diễn ra',
-  COMPLETED: 'Đã hoàn thành',
+  PENDING: 'Chưa có giờ',
+  SCHEDULED: 'Đã xếp lịch',
+  IN_PROGRESS: 'Đang thi',
+  COMPLETED: 'Đã thi',
+  ABSENT: 'Vắng',
+  CANCELLED: 'Đã hủy',
 };
 
 const formatDateTime = (value: string | null | undefined, language: 'vi' | 'en') => {
@@ -27,7 +30,7 @@ const formatDateTime = (value: string | null | undefined, language: 'vi' | 'en')
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? language === 'en' ? 'Not specified' : 'Chưa xác định'
-    : new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'vi-VN', { dateStyle: 'long', timeStyle: 'short' }).format(date);
+    : new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'vi-VN', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(date);
 };
 
 const formatWindow = (eligibility: ExamEntryEligibility, language: 'vi' | 'en') => {
@@ -52,6 +55,7 @@ export default function ExamSchedulePage() {
   const [eligibility, setEligibility] = useState<Record<string, ExamEntryEligibility | null>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [errorKind, setErrorKind] = useState<'invalid' | 'retryable' | 'other'>('other');
   const [totalPages, setTotalPages] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -60,15 +64,17 @@ export default function ExamSchedulePage() {
     const loadAssignments = async () => {
       setLoading(true);
       setError('');
+      setErrorKind('other');
       try {
         const result = await getStudentExamAssignments({ from, to, status: status || undefined, page, size: 10 });
         if (!active) return;
         setItems(result.content);
         setTotalPages(result.totalPages);
         setEligibility({});
-        const checks = await Promise.all(result.content.map(async (item) => {
+        const checks = await Promise.all(result.content.filter((item) => !['CANCELLED', 'ABSENT'].includes(item.assignmentStatus) && item.sessionStatus !== 'CANCELLED').map(async (item) => {
           try {
-            const access = await getStudentExamEligibility(item.assignmentId);
+            const examAttemptId = item.attempts?.find((attempt) => attempt.status === 'IN_PROGRESS' && !attempt.voided)?.examAttemptId;
+            const access = await getStudentExamEligibility(item.assignmentId, examAttemptId);
             return [item.assignmentId, access] as const;
           } catch {
             return [item.assignmentId, null] as const;
@@ -76,7 +82,11 @@ export default function ExamSchedulePage() {
         }));
         if (active) setEligibility(Object.fromEntries(checks));
       } catch (loadError) {
-        if (active) setError(loadError instanceof Error ? loadError.message : 'Không thể tải lịch thi.');
+        if (active) {
+          const scheduleError = loadError as StudentExamScheduleError;
+          setErrorKind(scheduleError.status === 400 ? 'invalid' : scheduleError.retryable ? 'retryable' : 'other');
+          setError('exam-schedule-error');
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -86,13 +96,29 @@ export default function ExamSchedulePage() {
   }, [from, to, status, page, reloadKey]);
 
   const enterRoom = (assignment: StudentExamAssignment) => {
-    navigate(`/student/exams/${encodeURIComponent(assignment.sessionId)}/room`);
+    if (!eligibility[assignment.assignmentId]?.canEnter || !eligibility[assignment.assignmentId]?.nextAttemptId) return;
+    const examAttemptId = eligibility[assignment.assignmentId]!.nextAttemptId!;
+    navigate(`/student/exams/${encodeURIComponent(assignment.sessionId)}/room?examAttemptId=${encodeURIComponent(examAttemptId)}`);
+  };
+
+  const eligibilityReason = (access: ExamEntryEligibility) => {
+    const code = access.reasonCode;
+    const messages: Record<string, string> = {
+      ATTEMPTS_EXHAUSTED: 'No attempts remain for this exam.',
+      ATTEMPT_IN_PROGRESS: 'Another attempt is still active. Resume it or contact your lecturer.',
+      COOLDOWN_ACTIVE: 'You can try again after {time}.',
+      OUTSIDE_WINDOW: 'This attempt is outside the allowed time window.',
+      NOT_ENROLLED: 'You are not enrolled in this exam.',
+      EXAM_CLOSED: 'This exam is closed.',
+    };
+    if (code === 'COOLDOWN_ACTIVE' && access.retryAt) return t(messages[code], { time: formatDateTime(access.retryAt, language) });
+    return t(code ? messages[code] ?? access.reason ?? 'Entry is unavailable.' : access.reason ?? 'Entry is unavailable.');
   };
 
   return (
     <div className="student-page exam-schedule-page">
       <StudentPageHeader
-        title="Lịch thi của tôi"
+        title={t('Exam schedule')}
         description="Xem các kỳ thi được xếp lịch và trạng thái đủ điều kiện vào phòng thi."
       />
       <div className="exam-schedule-actions">
@@ -109,11 +135,11 @@ export default function ExamSchedulePage() {
       <form className="exam-schedule-filters" onSubmit={(event) => event.preventDefault()}>
         <label>
           {t('Từ ngày')}
-          <input type="date" value={from} max={to} onChange={(event) => { setFrom(event.target.value); setPage(0); }} />
+          <input type="date" value={from} onChange={(event) => { setFrom(event.target.value); setPage(0); }} />
         </label>
         <label>
           {t('Đến ngày')}
-          <input type="date" value={to} min={from} onChange={(event) => { setTo(event.target.value); setPage(0); }} />
+          <input type="date" value={to} onChange={(event) => { setTo(event.target.value); setPage(0); }} />
         </label>
         <label>
           {t('Trạng thái')}
@@ -124,17 +150,15 @@ export default function ExamSchedulePage() {
         </label>
       </form>
 
-      {error && (
-        <StudentNotice title="Không thể tải lịch thi" kind="warning">
-          {error}{' '}
-          <button type="button" className="exam-schedule-retry" onClick={() => setReloadKey((value) => value + 1)}>{t('Thử lại')}</button>
-        </StudentNotice>
-      )}
+      {error && <StudentNotice title={t('Exam schedule')} kind="warning">
+        {errorKind === 'invalid' ? t('Could not load the exam schedule because the filters are invalid.') : errorKind === 'retryable' ? t('The exam schedule is temporarily unavailable.') : t('Unable to load the exam schedule.')}
+        {errorKind === 'retryable' && <> <button type="button" className="exam-schedule-retry" onClick={() => setReloadKey((value) => value + 1)}>{t('Thử lại')}</button></>}
+      </StudentNotice>}
       {loading && <section className="student-state-card info" role="status">{t('Đang tải lịch thi…')}</section>}
       {!loading && !error && items.length === 0 && (
         <section className="student-empty-card">
           <span className="student-empty-icon" aria-hidden="true">◷</span>
-          <h2>{t('Chưa có lịch thi trong khoảng thời gian này')}</h2>
+          <h2>{t('No exams in this date range')}</h2>
           <p>{t('Thử điều chỉnh bộ lọc ngày hoặc quay lại sau khi có lịch thi được phân công.')}</p>
         </section>
       )}
@@ -142,42 +166,49 @@ export default function ExamSchedulePage() {
         <section className="exam-assignment-list" aria-label={t('Danh sách lịch thi')}>
           {items.map((item) => {
             const access = eligibility[item.assignmentId];
-            const cancelled = item.sessionStatus === 'CANCELLED';
+            const cancelled = item.sessionStatus === 'CANCELLED' || item.assignmentStatus === 'CANCELLED';
+            const absent = item.assignmentStatus === 'ABSENT';
+            const inactive = cancelled || absent;
             return (
-              <article key={item.assignmentId} className={`exam-assignment-card ${cancelled ? 'cancelled' : ''}`}>
+              <article key={item.assignmentId} className={`exam-assignment-card ${inactive ? 'cancelled' : ''}`}>
                 <div className="exam-assignment-heading">
                   <div>
                     <h2>{t(item.sessionName || 'Buổi thi vấn đáp')}</h2>
-                    <p>{formatDateTime(item.scheduledTime, language)}</p>
+                    <p>{item.topicName ? `${item.topicName} · ` : ''}{formatDateTime(item.scheduledTime, language)}</p>
                   </div>
-                  <span className={`exam-assignment-status ${cancelled ? 'cancelled' : item.assignmentStatus.toLowerCase()}`}>
-                    {t(cancelled ? 'Đã hủy' : statusLabels[item.assignmentStatus] ?? item.assignmentStatus)}
+                  <span className={`exam-assignment-status ${inactive ? (cancelled ? 'cancelled' : 'absent') : item.assignmentStatus.toLowerCase()}`}>
+                    {t(cancelled ? 'Đã hủy' : absent ? 'Vắng' : statusLabels[item.assignmentStatus] ?? item.assignmentStatus)}
                   </span>
                 </div>
                 <dl className="exam-assignment-details">
+                  {item.attemptsUsed !== undefined && <div><dt>{t('Lượt thi')}</dt><dd>{item.attemptsUsed}/{item.attemptsAllowed ?? '—'} · {t('Còn lại')}: {item.attemptsRemaining ?? '—'}</dd></div>}
+                  {item.attempts?.length ? <div><dt>{t('Lượt tiếp theo')}</dt><dd>{item.attempts.find((attempt) => !attempt.counted && !attempt.voided)?.attemptNo ?? '—'} · {formatDateTime(item.attempts.find((attempt) => !attempt.counted && !attempt.voided)?.scheduledTime, language)}</dd></div> : null}
+                  {item.slotOrder != null && <div><dt>{t('Thứ tự lượt')}</dt><dd>{item.slotOrder}</dd></div>}
                   <div><dt>{t('Thời lượng')}</dt><dd>{language === 'en' ? `${item.timeLimitMinutes} min` : `${item.timeLimitMinutes} phút`}</dd></div>
-                  <div><dt>{t('Số câu hỏi')}</dt><dd>{language === 'en' ? `${item.maxMainQuestions} main · up to ${item.maxFollowupPerQuestion} follow-up questions each` : `${item.maxMainQuestions} câu chính · tối đa ${item.maxFollowupPerQuestion} câu hỏi phụ mỗi câu`}</dd></div>
+                  <div><dt>{t('Số câu hỏi')}</dt><dd>{language === 'en' ? `${item.totalMainQuestions ?? item.maxMainQuestions} main · up to ${item.maxFollowupPerQuestion} follow-up questions each` : `${item.totalMainQuestions ?? item.maxMainQuestions} câu chính · tối đa ${item.maxFollowupPerQuestion} câu hỏi phụ mỗi câu`}</dd></div>
                 </dl>
-                {!cancelled && (
+                {item.officialResult?.released ? <section className="exam-official-result" aria-label={t('Kết quả chính thức')}><strong>{t('Kết quả chính thức')}: {item.officialResult.total ?? '—'}</strong><span>{t('Lần thi')} {item.attempts?.find((attempt) => attempt.examAttemptId === item.officialResult?.officialAttemptId)?.attemptNo ?? '—'} · {item.officialResult.policy}</span></section> : <p className="exam-entry-reason">{t('Kết quả chưa công bố.')}</p>}
+                {!inactive && (
                   <div className="exam-assignment-entry">
                     <div aria-live="polite">
                       {access === undefined && <p>{t('Đang kiểm tra điều kiện vào phòng…')}</p>}
                       {access === null && <p className="exam-entry-reason">{t('Chưa thể xác nhận điều kiện vào phòng thi. Thử tải lại lịch thi.')}</p>}
                       {access && !access.canEnter && (
                         <p className="exam-entry-reason">
-                          {t(access.reason || 'Hiện chưa thể vào phòng thi.')} {formatWindow(access, language)}
+                          {eligibilityReason(access)} {formatWindow(access, language)}
                         </p>
                       )}
                     </div>
-                    {access?.canEnter ? (
+                    {access?.canEnter && access.nextAttemptId ? (
                       <button type="button" className="student-primary-button" onClick={() => enterRoom(item)}>{t('Vào phòng thi')}</button>
                     ) : (
                       <button type="button" className="student-primary-button" disabled>{t('Vào phòng thi')}</button>
                     )}
-                    <Link to={APP_ROUTES.student.deviceCheck}>{t('Kiểm tra thiết bị')}</Link>
                   </div>
                 )}
                 {cancelled && <p className="exam-entry-reason">{t('Phiên thi này đã bị hủy.')}</p>}
+                {absent && <p className="exam-entry-reason">{t('Trạng thái phiên ghi nhận vắng mặt.')}</p>}
+                <Link to={APP_ROUTES.student.deviceCheck}>{t('Kiểm tra thiết bị')}</Link>
               </article>
             );
           })}

@@ -7,7 +7,6 @@ export interface InteractionTurnResponse {
   aiQuestionText: string;
   transcriptText: string | null;
   audioSegmentUrl: string | null;
-  aiReasoning: string | null;
   createdAt: string;
 }
 
@@ -21,38 +20,15 @@ export interface InterviewResponse {
   endTime: string | null;
   currentTurn: InteractionTurnResponse | null;
   turns: InteractionTurnResponse[];
+  questionPlan?: PlannedQuestionResponse[];
+  examAttemptId?: string;
+  attemptNo?: number;
 }
 
-export interface SubmitAnswerResponse {
-  turnId: string;
-  transcriptText: string | null;
-  completed: boolean;
-  followUpGenerated: boolean;
-  nextTurn: InteractionTurnResponse | null;
-  answerClassification: string | null;
-  analysisSummary: string | null;
-  assessments: Array<{
-    assessmentId: string;
-    criteriaId: string;
-    criteriaName: string;
-    semanticSimilarity: number | null;
-    complianceStatus: string | null;
-    aiSuggestedPoints: number | null;
-    missingConcepts: string | null;
-    aiExplanationReasoning: string | null;
-  }>;
+export interface PlannedQuestionResponse {
+  questionId: string;
+  position: number;
+  bloomLevel: string;
+  questionText: string;
 }
 
-export type SubmitAnswerPayload =
-  | {
-      attemptId: string;
-      turnId: string;
-      audioSegmentUrl: string;
-      transcriptText?: never;
-    }
-  | {
-      attemptId: string;
-      turnId: string;
-      transcriptText: string;
-      audioSegmentUrl?: never;
-    };

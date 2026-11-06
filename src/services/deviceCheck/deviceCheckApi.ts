@@ -1,7 +1,6 @@
 import axios from 'axios';
 import apiClient from '../api/apiClient';
-import { unwrapApiResponse } from '../api/apiResponse';
-import type { DeviceCheckConfig, DeviceCheckSttResult } from '../../types/deviceCheck';
+import type { SttHealthResponse } from '../../types/stt';
 
 export class DeviceCheckApiError extends Error {
   constructor(
@@ -15,18 +14,15 @@ export class DeviceCheckApiError extends Error {
 }
 
 const errorMessages: Record<number, string> = {
-  400: 'Dữ liệu kiểm tra không hợp lệ. Hãy kiểm tra lại ngôn ngữ và bản ghi.',
+  400: 'Đã xảy ra lỗi khi kiểm tra thiết bị. Vui lòng thử lại.',
   401: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.',
   403: 'Tài khoản hiện tại không có quyền dùng chức năng kiểm tra thiết bị dành cho sinh viên.',
-  413: 'Bản ghi quá lớn. Hãy ghi âm ngắn hơn rồi thử lại.',
-  415: 'Định dạng bản ghi không được hỗ trợ. Hãy dùng trình duyệt khác hoặc chọn lại micro.',
-  429: 'Bạn đã kiểm tra quá nhiều lần. Vui lòng chờ trước khi thử lại.',
-  502: 'Dịch vụ AI đang gặp sự cố. Bản ghi vẫn còn trên thiết bị; bạn có thể thử lại.',
-  503: 'Dịch vụ AI hiện chưa sẵn sàng. Bản ghi vẫn được giữ để bạn thử lại sau.',
-  410: 'Phiên kiểm tra đã hết hạn. Hãy quay lại trang lịch thi và mở lại kiểm tra thiết bị.',
+  429: 'Dịch vụ đang bận. Hãy chờ một chút rồi thử lại.',
+  502: 'Dịch vụ nhận diện hiện không khả dụng. Hãy thử lại sau.',
+  503: 'STT chưa sẵn sàng. Hãy thử lại sau.',
 };
 
-export const getDeviceCheckError = (error: unknown): DeviceCheckApiError => {
+export const getDeviceCheckError = (error: unknown, context: 'tts' | 'stt' = 'stt'): DeviceCheckApiError => {
   if (error instanceof DeviceCheckApiError) return error;
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
@@ -35,6 +31,9 @@ export const getDeviceCheckError = (error: unknown): DeviceCheckApiError => {
     const retryAfterSeconds = Number.isFinite(parsedRetryAfter) && parsedRetryAfter > 0
       ? parsedRetryAfter
       : undefined;
+    if (context === 'tts' && (status === 502 || status === 503)) {
+      return new DeviceCheckApiError('Không thể tải âm thanh mẫu từ máy chủ. Hãy thử lại sau.', status, retryAfterSeconds);
+    }
     if (!status) {
       return new DeviceCheckApiError('Không thể kết nối đến máy chủ. Hãy kiểm tra kết nối mạng rồi thử lại.');
     }
@@ -47,12 +46,13 @@ export const getDeviceCheckError = (error: unknown): DeviceCheckApiError => {
   return new DeviceCheckApiError('Máy chủ trả về dữ liệu không hợp lệ. Vui lòng thử lại.');
 };
 
-export const getDeviceCheckConfig = async (): Promise<DeviceCheckConfig> => {
+export const getDeviceCheckSttHealth = async (): Promise<SttHealthResponse> => {
   try {
-    const response = await apiClient.get('/student/device-check/config');
-    return unwrapApiResponse<DeviceCheckConfig>(response.data);
+    const response = await apiClient.get<SttHealthResponse>('/student/device-check/stt/health', { timeout: 10_000 });
+    if (!response.data?.stt || !response.data?.tts) throw new DeviceCheckApiError('Máy chủ trả về trạng thái dịch vụ không hợp lệ. Vui lòng thử lại.');
+    return response.data;
   } catch (error) {
-    throw getDeviceCheckError(error);
+    throw getDeviceCheckError(error, 'stt');
   }
 };
 
@@ -65,26 +65,12 @@ export const getDeviceCheckTts = async (language: string, signal?: AbortSignal):
       signal,
     });
     const contentType = String(response.headers['content-type'] ?? '').toLowerCase();
-    if (!(response.data instanceof Blob) || response.data.size === 0 || !contentType.startsWith('audio/mpeg')) {
+    if (!(response.data instanceof Blob) || response.data.size === 0
+      || !(contentType.startsWith('audio/mpeg') || contentType.startsWith('audio/wav') || contentType.startsWith('audio/wave'))) {
       throw new DeviceCheckApiError('Máy chủ không trả về tệp âm thanh MP3 hợp lệ.');
     }
     return response.data;
   } catch (error) {
-    throw getDeviceCheckError(error);
-  }
-};
-
-export const postDeviceCheckStt = async (file: File, language: string): Promise<DeviceCheckSttResult> => {
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('language', language);
-    const response = await apiClient.post('/student/device-check/stt', formData, {
-      timeout: 120_000,
-      headers: { 'Content-Type': undefined },
-    });
-    return unwrapApiResponse<DeviceCheckSttResult>(response.data);
-  } catch (error) {
-    throw getDeviceCheckError(error);
+    throw getDeviceCheckError(error, 'tts');
   }
 };
