@@ -9,6 +9,11 @@ import SubjectAssignmentsPage from '../pages/admin/SubjectAssignmentsPage';
 import SystemConfigurationPage from '../pages/admin/SystemConfigurationPage';
 import AuditLogsPage from '../pages/admin/AuditLogsPage';
 import { AccountProfilePage } from '../pages/AccountPages';
+import SubjectRubricPage from '../pages/lecturer/rubrics/SubjectRubricPage';
+import QuestionBankManagementPage from '../pages/lecturer/questions/QuestionBankManagementPage';
+import CreateExamPage from '../pages/lecturer/exams/CreateExamPage';
+import ExamListPage from '../pages/lecturer/exams/ExamListPage';
+import ExamDetailPage from '../pages/lecturer/exams/ExamDetailPage';
 
 export default function AdminRoutes() {
   return (
@@ -22,6 +27,14 @@ export default function AdminRoutes() {
           <Route path="subject-assignments" element={<SubjectAssignmentsPage />} />
           <Route path="settings" element={<SystemConfigurationPage />} />
           <Route path="audit-logs" element={<AuditLogsPage />} />
+          <Route path="rubrics" element={<SubjectRubricPage />} />
+          <Route path="questions" element={<QuestionBankManagementPage />} />
+          <Route path="exams/create" element={<CreateExamPage />} />
+          <Route path="exams/:id/edit" element={<CreateExamPage />} />
+          <Route path="exam-sessions" element={<ExamListPage />} />
+          <Route path="exam-sessions/create" element={<CreateExamPage />} />
+          <Route path="exam-sessions/:id/edit" element={<CreateExamPage />} />
+          <Route path="exam-sessions/:id" element={<ExamDetailPage />} />
           <Route path="profile" element={<AccountProfilePage roleLabel="Quản trị viên" />} />
           <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>

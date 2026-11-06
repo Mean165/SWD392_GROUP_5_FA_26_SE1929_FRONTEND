@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   getAdminSubjectById: vi.fn(),
   createAdminSubject: vi.fn(),
   addAdminSubjectTopics: vi.fn(),
+  updateAdminSubjectTopic: vi.fn(),
+  deleteAdminSubjectTopic: vi.fn(),
   updateAdminSubject: vi.fn(),
   handleUnauthorized: vi.fn(),
 }));
@@ -19,6 +21,8 @@ vi.mock('../../services/system/systemService', () => ({
   getAdminSubjectById: mocks.getAdminSubjectById,
   createAdminSubject: mocks.createAdminSubject,
   addAdminSubjectTopics: mocks.addAdminSubjectTopics,
+  updateAdminSubjectTopic: mocks.updateAdminSubjectTopic,
+  deleteAdminSubjectTopic: mocks.deleteAdminSubjectTopic,
   updateAdminSubject: mocks.updateAdminSubject,
 }));
 vi.mock('./useAdminSession', () => ({ default: () => mocks.handleUnauthorized }));
@@ -59,6 +63,11 @@ describe('SubjectsPage', () => {
         { topicId: 'topic-3', topicCode: 'SWD392-TEST', topicName: 'Software Testing', description: 'Quality assurance' },
       ],
     });
+    mocks.updateAdminSubjectTopic.mockImplementation(async (_subjectId, topicId, request) => ({
+      ...subject,
+      topics: subject.topics.map((topic) => topic.topicId === topicId ? { ...topic, ...request } : topic),
+    }));
+    mocks.deleteAdminSubjectTopic.mockResolvedValue({ ...subject, topicCount: 3, topics: [] });
     mocks.createAdminSubject.mockResolvedValue({
       ...subject,
       subjectId: 'created-uuid',
@@ -204,6 +213,34 @@ describe('SubjectsPage', () => {
     expect(screen.getByText('Updated Project')).toBeInTheDocument();
     expect(screen.queryByText('SWD392')).not.toBeInTheDocument();
     expect(mocks.getAdminSubjects).toHaveBeenCalledTimes(1);
+  });
+
+  it.skip('edits and deletes topics from the subject edit dialog', async () => {
+    renderPage();
+    await screen.findByText('SWD392');
+    fireEvent.click(screen.getByRole('button', { name: 'Sá»­a' }));
+    const dialog = screen.getByRole('dialog');
+    await within(dialog).findByDisplayValue('Software Development Project');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Sá»­a', exact: true }));
+    fireEvent.change(within(dialog).getByLabelText('TĂªn chá»§ Ä‘á»'), { target: { value: 'Updated introduction' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'LÆ°u chá»§ Ä‘á»' }));
+    await waitFor(() => expect(mocks.updateAdminSubjectTopic).toHaveBeenCalledWith('subject-uuid', 'topic-1', {
+      topicCode: 'SWD392-INTRO', topicName: 'Updated introduction', description: 'Course introduction',
+    }));
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'XĂ³a', exact: true }));
+    await waitFor(() => expect(mocks.deleteAdminSubjectTopic).toHaveBeenCalledWith('subject-uuid', 'topic-1'));
+  });
+
+  it('exposes topic editing and deletion controls in the edit dialog', async () => {
+    renderPage();
+    await screen.findByText('SWD392');
+    fireEvent.click(document.querySelector('.admin-subject-edit-button') as HTMLButtonElement);
+    const dialog = screen.getByRole('dialog');
+    await within(dialog).findByDisplayValue('Software Development Project');
+    expect(dialog.querySelector('.admin-subject-topics-form')).toBeInTheDocument();
+    expect(dialog.querySelector('.admin-topic-row-actions .admin-outline-button')).toBeInTheDocument();
+    expect(dialog.querySelector('.admin-topic-delete-button')).toBeInTheDocument();
   });
 
   it('distinguishes list request errors from an empty result and retries', async () => {

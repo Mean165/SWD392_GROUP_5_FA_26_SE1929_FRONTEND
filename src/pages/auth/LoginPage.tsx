@@ -135,12 +135,7 @@ export default function LoginPage() {
           <div className={`login-form-content${isWelcoming ? ' is-hidden' : ''}`} aria-hidden={isWelcoming}>
             <div className="login-header">
               <div className="login-brand-row">
-                <div className="login-logo-icon" aria-hidden="true">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                    <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
-                  </svg>
-                </div>
+                <img className="login-logo-icon" src="/images/aiviva-logo.svg" alt="" />
                 <div className="login-brand-copy">
                   <strong>AiViva</strong>
                   <span>{t('Hệ thống thi vấn đáp trực tuyến hỗ trợ bởi AI')}</span>

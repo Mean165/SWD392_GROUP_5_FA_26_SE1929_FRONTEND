@@ -25,13 +25,8 @@
   width: 52px;
   height: 52px;
   margin: 0;
-  background-color: #eff6ff;
-  color: #2563eb;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #dbeafe;
+  flex: 0 0 52px;
+  object-fit: contain;
 }
 
 /* Tiêu đề Card */
@@ -296,10 +291,9 @@
 }
 
 .login-brand-row .login-logo-icon {
-  width: 50px;
-  height: 50px;
-  flex: 0 0 50px;
-  border-radius: 13px;
+  width: 56px;
+  height: 56px;
+  flex-basis: 56px;
 }
 
 .login-brand-copy {

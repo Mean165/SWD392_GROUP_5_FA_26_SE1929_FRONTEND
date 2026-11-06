@@ -18,7 +18,9 @@ export default function ProtectedRoute({ allowedRoles = [] }: ProtectedRouteProp
     return <Navigate to="/change-password" replace />;
   }
 
-  if (allowedRoles.length > 0 && (!user || !allowedRoles.includes(user.role as UserRole))) {
+  const rawRole = String(user?.role ?? '').toUpperCase().replace(/^ROLE_/, '');
+  const normalizedRole = rawRole === 'LE' ? 'LECTURER' : rawRole === 'AD' ? 'ADMIN' : rawRole === 'ST' ? 'STUDENT' : rawRole;
+  if (allowedRoles.length > 0 && (!user || !allowedRoles.includes(normalizedRole as UserRole))) {
     return <Navigate to="/403" replace />;
   }
 
