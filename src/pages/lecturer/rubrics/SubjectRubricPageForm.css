@@ -1,0 +1,7 @@
+.rubric-management-page .topic-picker-panel>label,.rubric-management-page .rubric-editor>label{display:flex;flex-direction:column;gap:.35rem;margin:.8rem 0;font-weight:600;color:#33415c}
+.rubric-management-page .rubric-editor>label input,.rubric-management-page .rubric-editor>label textarea,.rubric-management-page .topic-picker-panel select{width:100%;border:1px solid #ccd6e5;border-radius:6px;padding:.65rem .7rem;background:#fff;color:#1c2b4a}
+.rubric-management-page .rubric-editor>label textarea{resize:vertical}
+.rubric-management-page .criteria-table input{min-width:120px}
+.rubric-management-page .criteria-table input[type=number]{min-width:92px}
+.rubric-management-page [role=alert]{color:#a1261b}
+@media(max-width:640px){.rubric-management-page{padding:.75rem}.rubric-management-page .rubric-editor{padding:.85rem}.rubric-management-page .criteria-table{min-width:640px}.rubric-management-page .editor-actions{flex-wrap:wrap}}

@@ -4,7 +4,7 @@ import RoleLayout from './RoleLayout';
 const navigation = [
   { to: APP_ROUTES.lecturer.dashboard, label: 'Tổng quan', icon: 'home' },
   { to: APP_ROUTES.lecturer.courses, label: 'Môn học', icon: 'courses' },
-  { to: APP_ROUTES.lecturer.exams, label: 'Kỳ thi & lịch thi', icon: 'calendar' },
+  { to: APP_ROUTES.lecturer.examSessions, label: 'Quản lý kỳ thi', icon: 'calendar' },
   { to: APP_ROUTES.lecturer.questions, label: 'Ngân hàng câu hỏi', icon: 'questions' },
   { to: APP_ROUTES.lecturer.rubrics, label: 'Thang điểm', icon: 'rubric' },
   { to: APP_ROUTES.lecturer.evaluations, label: 'Chấm điểm', icon: 'grading' },

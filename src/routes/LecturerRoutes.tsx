@@ -5,11 +5,13 @@ import ProtectedRoute from './ProtectedRoute';
 import LecturerDashboardPage from '../pages/lecturer/DashboardPage';
 import CoursesPage from '../pages/lecturer/CoursesPage';
 import QuestionBankPage from '../pages/lecturer/questions/QuestionBankPage';
+import QuestionBankManagementPage from '../pages/lecturer/questions/QuestionBankManagementPage';
 import QuestionDetailPage from '../pages/lecturer/questions/QuestionDetailPage';
 import EditQuestionPage from '../pages/lecturer/questions/EditQuestionPage';
 import GenerateQuestionPage from '../pages/lecturer/questions/GenerateQuestionPage';
 import QuestionReviewPage from '../pages/lecturer/questions/QuestionReviewPage';
 import RubricPage from '../pages/lecturer/questions/RubricPage';
+import SubjectRubricPage from '../pages/lecturer/rubrics/SubjectRubricPage';
 import ExamListPage from '../pages/lecturer/exams/ExamListPage';
 import CreateExamPage from '../pages/lecturer/exams/CreateExamPage';
 import ExamDetailPage from '../pages/lecturer/exams/ExamDetailPage';
@@ -33,17 +35,24 @@ export default function LecturerRoutes() {
         <Route element={<LecturerLayout />}>
           <Route path="dashboard" element={<LecturerDashboardPage />} />
           <Route path="courses" element={<CoursesPage />} />
-          <Route path="questions" element={<QuestionBankPage />} />
+          <Route path="questions" element={<QuestionBankManagementPage />} />
+          <Route path="questions/legacy" element={<QuestionBankPage />} />
           <Route path="questions/generate" element={<GenerateQuestionPage />} />
           <Route path="questions/review" element={<QuestionReviewPage />} />
           <Route path="questions/:id" element={<QuestionDetailPage />} />
           <Route path="questions/:id/edit" element={<EditQuestionPage />} />
-          <Route path="rubrics" element={<RubricPage />} />
+          <Route path="rubrics" element={<SubjectRubricPage />} />
+          <Route path="rubrics/questions" element={<RubricPage />} />
           <Route path="exams" element={<ExamListPage />} />
           <Route path="exams/create" element={<CreateExamPage />} />
+          <Route path="exams/:id/edit" element={<CreateExamPage />} />
           <Route path="exams/:id" element={<ExamDetailPage />} />
           <Route path="exams/:id/schedule" element={<ExamSchedulePage />} />
           <Route path="exams/:id/participants" element={<ExamParticipantsPage />} />
+          <Route path="exam-sessions" element={<ExamListPage />} />
+          <Route path="exam-sessions/create" element={<CreateExamPage />} />
+          <Route path="exam-sessions/:id/edit" element={<CreateExamPage />} />
+          <Route path="exam-sessions/:id" element={<ExamDetailPage />} />
           <Route path="evaluations" element={<EvaluationListPage />} />
           <Route path="evaluations/:id" element={<EvaluationDetailPage />} />
           <Route path="evaluations/:id/review" element={<ScoreReviewPage />} />
