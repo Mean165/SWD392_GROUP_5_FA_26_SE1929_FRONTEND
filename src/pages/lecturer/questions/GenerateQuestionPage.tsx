@@ -28,12 +28,12 @@ import QuestionReviewList from './QuestionReviewList';
 import './question-generation.css';
 
 const JOB_STORAGE_KEY = 'aiviva-question-generation-job';
-const BLOOM_LEVELS: BloomLevel[] = ['REMEMBER', 'UNDERSTAND', 'APPLY', 'ANALYZE'];
+const BLOOM_LEVELS: BloomLevel[] = ['REMEMBER', 'UNDERSTAND', 'APPLY', 'ANALYZE', 'EVALUATE', 'CREATE'];
 const DOCUMENT_POLL_MS = 1500;
 const JOB_POLL_MS = 2500;
 const JOB_WAIT_LIMIT_MS = 120000;
 
-type UploadingFile = { id: string; filename: string; error?: string };
+type UploadingFile = { id: string; file: File; filename: string; error?: string; cancelled?: boolean };
 
 type ScopeNoticeProps = {
   variant: 'info' | 'error';
@@ -69,13 +69,36 @@ const jobStatusLabel = (status: GenerationJob['status'], t: (text: string) => st
   DONE: t('Hoàn tất'),
   FAILED: t('Thất bại'),
 }[status]);
+const generationFailureMessage = (message: string, t: (text: string) => string) => {
+  const translations: Record<string, string> = {
+    'AI provider quota or rate limit reached': t('Nhà cung cấp AI đã hết hạn mức hoặc giới hạn tốc độ. Hãy thử lại sau.'),
+    'AI provider request timed out': t('Yêu cầu AI đã quá thời gian chờ. Hãy thử lại.'),
+    'AI provider is not configured; set GEMINI_API_KEY': t('Nhà cung cấp AI chưa được cấu hình. Hãy liên hệ quản trị viên.'),
+    'AI or document processing failed; check provider configuration and retry': t('AI hoặc xử lý tài liệu gặp lỗi. Hãy kiểm tra tài liệu rồi thử lại.'),
+  };
+  return translations[message] ?? message;
+};
 const formatSize = (size: number) => size < 1024 * 1024
   ? `${(size / 1024).toFixed(0)} KB`
   : `${(size / (1024 * 1024)).toFixed(1)} MB`;
 
-type GenerateQuestionPageProps = { embedded?: boolean };
+type GenerateQuestionPageProps = {
+  embedded?: boolean;
+  singleBloom?: boolean;
+  onGenerationComplete?: (job: GenerationJob) => void;
+};
 
-export default function GenerateQuestionPage({ embedded = false }: GenerateQuestionPageProps) {
+const selectedBloomDistribution = (selected: BloomLevel[], count: number): Record<BloomLevel, number> => {
+  const distribution: Record<BloomLevel, number> = { REMEMBER: 0, UNDERSTAND: 0, APPLY: 0, ANALYZE: 0, EVALUATE: 0, CREATE: 0 };
+  if (!selected.length) return distribution;
+  const orderedLevels = BLOOM_LEVELS.filter((level) => selected.includes(level));
+  const baseCount = Math.floor(count / orderedLevels.length);
+  const remainder = count % orderedLevels.length;
+  orderedLevels.forEach((level, index) => { distribution[level] = baseCount + (index < remainder ? 1 : 0); });
+  return distribution;
+};
+
+export default function GenerateQuestionPage({ embedded = false, singleBloom = false, onGenerationComplete }: GenerateQuestionPageProps) {
   const { t, language } = useLanguage();
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const [topics, setTopics] = useState<TopicOption[]>([]);
@@ -111,17 +134,32 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
   const [pollUnavailable, setPollUnavailable] = useState(false);
   const [pollCycle, setPollCycle] = useState(0);
   const [numberOfQuestions, setNumberOfQuestions] = useState(4);
+  const [selectedBloomLevels, setSelectedBloomLevels] = useState<BloomLevel[]>(['REMEMBER']);
   const [bloomDistribution, setBloomDistribution] = useState<Record<BloomLevel, number>>({
     REMEMBER: 1,
     UNDERSTAND: 1,
     APPLY: 1,
     ANALYZE: 1,
+    EVALUATE: 0,
+    CREATE: 0,
   });
   const [generationLanguage, setGenerationLanguage] = useState<'vi' | 'en'>(language);
-  const [generateRubric, setGenerateRubric] = useState(true);
+  const [generateRubric, setGenerateRubric] = useState(!singleBloom);
   const [rubricTotalPoints, setRubricTotalPoints] = useState(10);
   const jobStartedAt = useRef<number | null>(null);
   const uploadSequence = useRef(0);
+  const uploadControllers = useRef(new Map<string, AbortController>());
+  const mounted = useRef(true);
+  const completedJobId = useRef('');
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      uploadControllers.current.forEach((controller) => controller.abort('unmount'));
+      uploadControllers.current.clear();
+    };
+  }, []);
 
   const getApiErrorMessage = (error: unknown, fallback: string) => {
     if (axios.isAxiosError(error)) {
@@ -292,6 +330,40 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
     };
   }, [job, pollTimedOut, pollUnavailable, pollCycle, t]);
 
+  useEffect(() => {
+    if (job?.status !== 'DONE' || !onGenerationComplete || completedJobId.current === job.jobId) return;
+    completedJobId.current = job.jobId;
+    onGenerationComplete(job);
+  }, [job?.jobId, job?.status, onGenerationComplete]);
+
+  const uploadFile = async (row: UploadingFile) => {
+    const controller = new AbortController();
+    uploadControllers.current.set(row.id, controller);
+    setUploadingFiles((current) => current.map((item) => item.id === row.id ? { ...item, error: undefined, cancelled: false } : item));
+    try {
+      const document = await uploadQuestionDocument(subjectId, topicId, row.file, controller.signal);
+      if (!mounted.current) return;
+      setAuthenticationRequired(false);
+      setDocuments((current) => [...current.filter((item) => item.documentId !== document.documentId), document]);
+      setUploadingFiles((current) => current.filter((item) => item.id !== row.id));
+    } catch (error: unknown) {
+      if (!mounted.current) return;
+      if (controller.signal.aborted) {
+        if (controller.signal.reason === 'user') {
+          setUploadingFiles((current) => current.map((item) => item.id === row.id
+            ? { ...item, error: t('Đã hủy tải lên.'), cancelled: true }
+            : item));
+          setDocumentsRetryKey((key) => key + 1);
+        }
+      } else {
+        const message = getApiErrorMessage(error, t('Không thể tải lên tài liệu.'));
+        setUploadingFiles((current) => current.map((item) => item.id === row.id ? { ...item, error: message, cancelled: false } : item));
+      }
+    } finally {
+      if (uploadControllers.current.get(row.id) === controller) uploadControllers.current.delete(row.id);
+    }
+  };
+
   const handleUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     event.target.value = '';
@@ -304,22 +376,17 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
     setDocumentError('');
     const fileRows = files.map((file) => {
       uploadSequence.current += 1;
-      return { id: `${Date.now()}-${uploadSequence.current}`, filename: file.name };
+      return { id: `${Date.now()}-${uploadSequence.current}`, file, filename: file.name };
     });
     setUploadingFiles((current) => [...current, ...fileRows]);
-    await Promise.all(files.map(async (file, index) => {
-      const row = fileRows[index];
-      try {
-        const document = await uploadQuestionDocument(subjectId, topicId, file);
-        setAuthenticationRequired(false);
-        setDocuments((current) => [...current.filter((item) => item.documentId !== document.documentId), document]);
-        setUploadingFiles((current) => current.filter((item) => item.id !== row.id));
-      } catch (error: unknown) {
-        const message = getApiErrorMessage(error, t('Không thể tải lên tài liệu.'));
-        setUploadingFiles((current) => current.map((item) => item.id === row.id ? { ...item, error: message } : item));
-      }
-    }));
-    setUploading(false);
+    await Promise.all(fileRows.map(uploadFile));
+    if (mounted.current) setUploading(false);
+  };
+
+  const retryUpload = async (row: UploadingFile) => {
+    setUploading(true);
+    await uploadFile(row);
+    if (mounted.current) setUploading(false);
   };
 
   const toggleDocument = (documentId: string) => {
@@ -344,6 +411,10 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
   const handleCreateJob = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setPageError('');
+    if (!Number.isInteger(numberOfQuestions) || numberOfQuestions < 1 || numberOfQuestions > 20) {
+      setPageError(t('Số câu hỏi phải từ 1 đến 20.'));
+      return;
+    }
     const readyIds = selectedDocumentIds.filter((id) => documents.some((document) => document.documentId === id && document.status === 'READY'));
     if (!subjectId || !topicId) {
       setPageError(t('Vui lòng chọn môn học và chủ đề trước.'));
@@ -353,7 +424,14 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
       setPageError(t('Chọn ít nhất một tài liệu sẵn sàng.'));
       return;
     }
-    if (Object.values(bloomDistribution).reduce((sum, value) => sum + value, 0) !== numberOfQuestions) {
+    const requestBloomDistribution = singleBloom
+      ? selectedBloomDistribution(selectedBloomLevels, numberOfQuestions)
+      : bloomDistribution;
+    if (singleBloom && !selectedBloomLevels.length) {
+      setPageError(t('Chọn ít nhất một mức Bloom.'));
+      return;
+    }
+    if (Object.values(requestBloomDistribution).reduce((sum, value) => sum + value, 0) !== numberOfQuestions) {
       setPageError(t('Phân bổ Bloom phải bằng tổng số câu hỏi.'));
       return;
     }
@@ -366,9 +444,9 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
       topicId,
       documentIds: readyIds,
       numberOfQuestions,
-      bloomDistribution,
-      language: generationLanguage,
-      generateRubric,
+      bloomDistribution: requestBloomDistribution,
+      language: singleBloom ? language : generationLanguage,
+      generateRubric: singleBloom ? false : generateRubric,
       rubricTotalPoints: Number(rubricTotalPoints) || 10,
     };
     setJobCreating(true);
@@ -387,7 +465,7 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
         // The job remains available in this page if browser storage is blocked.
       }
     } catch (error: unknown) {
-      const message = getQuestionGenerationErrorMessage(error, t('Không thể thực hiện thao tác.'));
+      const message = getApiErrorMessage(error, t('Không thể thực hiện thao tác.'));
       const retryAfter = getQuestionGenerationRetryAfter(error);
       setPageError(retryAfter ? `${message} ${t('Thử lại sau')}: ${retryAfter}` : message);
     } finally {
@@ -477,7 +555,12 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
         {uploadingFiles.length > 0 && <div className="qg-document-list" aria-live="polite">
           {uploadingFiles.map((file) => <div className="qg-document-row" key={file.id}>
             <div className="qg-document-main"><div><strong>{file.filename}</strong><small>{file.error ? file.error : `${t('Đang tải lên')}...`}</small></div></div>
-            <span className={file.error ? 'qg-status qg-status-failed' : 'qg-status qg-status-processing'}>{file.error ? t('Thất bại') : t('Đang tải lên')}</span>
+            <span className={file.cancelled ? 'qg-status qg-status-failed' : file.error ? 'qg-status qg-status-failed' : 'qg-status qg-status-processing'}>
+              {file.cancelled ? t('Đã hủy') : file.error ? t('Thất bại') : t('Đang tải lên')}
+            </span>
+            {file.error
+              ? <button type="button" className="qg-text-link" disabled={uploading} onClick={() => void retryUpload(file)}>{t('Thử lại')}</button>
+              : <button type="button" className="qg-text-link" onClick={() => uploadControllers.current.get(file.id)?.abort('user')}>{t('Hủy tải lên')}</button>}
           </div>)}
         </div>}
         {!documentsLoading && !documentsError && !documents.length && subjectId && topicId && <p className="qg-empty">{t('Không có dữ liệu phù hợp.')}</p>}
@@ -499,6 +582,27 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
 
       <section className="qg-section" aria-labelledby="qg-config-heading">
         <div className="qg-section-heading"><div><h2 id="qg-config-heading">{t('Cấu hình sinh câu hỏi')}</h2><p>{t('Tài liệu sử dụng')}: {selectedReadyCount}</p></div></div>
+        {singleBloom ? <form className="qg-form qg-single-bloom-form" onSubmit={handleCreateJob}>
+          <label className="qg-field qg-question-count-field">
+            <span>{t('Số câu hỏi')}</span>
+            <input className="qg-control" type="number" min="1" max="20" step="1" required value={numberOfQuestions} onChange={(event) => setNumberOfQuestions(Number(event.target.value))} />
+          </label>
+          <fieldset className="qg-field qg-bloom-select-field">
+            <legend>{t('Mức Bloom')}</legend>
+            <div className="qg-bloom-select-grid">
+              {BLOOM_LEVELS.map((level) => <label className="qg-bloom-option" key={level}>
+                <input type="checkbox" checked={selectedBloomLevels.includes(level)} onChange={(event) => setSelectedBloomLevels((current) => event.target.checked ? [...current, level] : current.filter((item) => item !== level))} />
+                <span>{level}</span>
+              </label>)}
+            </div>
+          </fieldset>
+          <div className="qg-field-wide qg-form-footer">
+            <span className="qg-muted">{t('Chỉ tài liệu sẵn sàng mới được chọn.')}</span>
+            <button className="qg-button" type="submit" disabled={jobCreating || selectedReadyCount === 0 || !subjectId || !topicId}>
+              {jobCreating ? t('Đang tạo') : pageError || job?.status === 'FAILED' ? t('Thử lại') : t('Tạo yêu cầu sinh')}
+            </button>
+          </div>
+        </form> : (
         <form className="qg-form" onSubmit={handleCreateJob}>
           <label className="qg-field">
             <span>{t('Số câu hỏi')}</span>
@@ -536,6 +640,7 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
             </button>
           </div>
         </form>
+        )}
       </section>
 
       {(job || storedJobId) && <section className="qg-section" aria-labelledby="qg-job-heading">
@@ -548,7 +653,7 @@ export default function GenerateQuestionPage({ embedded = false }: GenerateQuest
             <span>{t('ID công việc')}: {job.jobId}</span>
           </div>
           <progress max={100} value={Math.min(100, Math.max(0, job.progress))}>{job.progress}%</progress>
-          {job.error && <p className="qg-job-error"><strong>{t('Lỗi sinh câu hỏi')}:</strong> {job.error}</p>}
+          {job.error && <p className="qg-job-error"><strong>{t('Lỗi sinh câu hỏi')}:</strong> {generationFailureMessage(job.error, t)}</p>}
           {job.status === 'FAILED' && job.questionIds.length > 0 && <p className="qg-muted">{t('Câu hỏi')}: {job.questionIds.map((id, index) => <span key={id}>{index > 0 ? ', ' : ''}<Link className="qg-text-link" to={`${APP_ROUTES.lecturer.questions}/${encodeURIComponent(id)}`}>{id}</Link></span>)}</p>}
         </div>}
         {!job && storedJobId && <p className="qg-job-error">{jobError || t('Không tìm thấy trạng thái công việc. Câu hỏi đã lưu vẫn có thể xem trong danh sách.')} ({storedJobId})</p>}

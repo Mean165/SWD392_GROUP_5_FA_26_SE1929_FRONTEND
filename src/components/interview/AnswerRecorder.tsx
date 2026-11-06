@@ -1,275 +1,48 @@
-import { useEffect, useRef, useState } from 'react';
-import { blobToAudioDataUrl, selectSupportedAudioMimeType } from '../../utils/interviewAudio';
+import { useEffect, useState } from 'react';
+import { useSttSession } from '../../hooks/useSttSession';
+import type { SttLanguage } from '../../types/stt';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface AnswerRecorderProps {
+  examAttemptId: string;
+  turnId: string;
   recordingAvailable: boolean;
   isSubmitting: boolean;
   submitError: string | null;
-  onRecordingReady: (dataUrl: string) => void;
   onSubmit: () => void;
   onDiscard: () => void;
 }
 
-const getMicrophoneError = (error: unknown): string => {
-  if (error instanceof DOMException) {
-    if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
-      return 'Bạn chưa cấp quyền micro. Hãy cho phép trình duyệt sử dụng micro rồi thử lại.';
-    }
-    if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-      return 'Không tìm thấy micro trên thiết bị này.';
-    }
-    if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-      return 'Micro không khả dụng hoặc đang được ứng dụng khác sử dụng.';
-    }
-  }
-  return 'Không thể bắt đầu ghi âm. Hãy kiểm tra micro và thử lại.';
-};
-
-const formatDuration = (seconds: number): string => {
-  const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const remainingSeconds = (seconds % 60).toString().padStart(2, '0');
-  return `${minutes}:${remainingSeconds}`;
-};
-
-export default function AnswerRecorder({
-  recordingAvailable,
-  isSubmitting,
-  submitError,
-  onRecordingReady,
-  onSubmit,
-  onDiscard,
-}: AnswerRecorderProps) {
-  const { t } = useLanguage();
-  const [isRecording, setIsRecording] = useState(false);
-  const [isStarting, setIsStarting] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [recordingError, setRecordingError] = useState<string | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<BlobPart[]>([]);
-  const timerRef = useRef<number | null>(null);
-  const mountedRef = useRef(false);
-  const cancelOnStopRef = useRef(false);
-  const startLockRef = useRef(false);
-
-  const releaseMicrophone = () => {
-    if (timerRef.current !== null) {
-      window.clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
-    recorderRef.current = null;
-  };
-
+export default function AnswerRecorder({ examAttemptId, turnId, isSubmitting, submitError, onSubmit, onDiscard }: AnswerRecorderProps) {
+  const { t, language } = useLanguage();
+  const [inputs, setInputs] = useState<MediaDeviceInfo[]>([]);
+  const [inputId, setInputId] = useState('');
+  const session = useSttSession({
+    language: (language === 'vi' ? 'vi-VN' : 'en-US') as SttLanguage,
+    deviceId: inputId || undefined,
+    purpose: 'EXAM', attemptId: examAttemptId, turnId,
+    onEnded: onSubmit,
+  });
+  const active = session.state === 'connecting' || session.state === 'listening';
   useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      const recorder = recorderRef.current;
-      if (recorder && recorder.state !== 'inactive') {
-        recorder.ondataavailable = null;
-        recorder.onstop = null;
-        recorder.onerror = null;
-        recorder.stop();
-      }
-      releaseMicrophone();
-    };
+    let mounted = true;
+    navigator.mediaDevices?.enumerateDevices().then((devices) => {
+      if (mounted) setInputs(devices.filter((device) => device.kind === 'audioinput'));
+    }).catch(() => { if (mounted) setInputs([]); });
+    return () => { mounted = false; };
   }, []);
-
-  const startRecording = async () => {
-    if (startLockRef.current || recorderRef.current?.state === 'recording' || isSubmitting) return;
-    startLockRef.current = true;
-    setIsStarting(true);
-    setRecordingError(null);
-    setDuration(0);
-
-    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-      setRecordingError('Ghi âm cần trình duyệt hỗ trợ và kết nối bảo mật (HTTPS hoặc localhost).');
-      startLockRef.current = false;
-      setIsStarting(false);
-      return;
-    }
-    if (typeof MediaRecorder === 'undefined') {
-      setRecordingError('Trình duyệt này không hỗ trợ ghi âm. Hãy dùng trình duyệt hiện đại khác.');
-      startLockRef.current = false;
-      setIsStarting(false);
-      return;
-    }
-    if (typeof MediaRecorder.isTypeSupported !== 'function') {
-      setRecordingError('Trình duyệt không hỗ trợ kiểm tra định dạng ghi âm tương thích.');
-      startLockRef.current = false;
-      setIsStarting(false);
-      return;
-    }
-
-    let mimeType: string | null;
-    try {
-      mimeType = selectSupportedAudioMimeType((candidate) => MediaRecorder.isTypeSupported(candidate));
-    } catch {
-      setRecordingError('Không thể kiểm tra định dạng ghi âm trên trình duyệt này.');
-      startLockRef.current = false;
-      setIsStarting(false);
-      return;
-    }
-    if (!mimeType) {
-      setRecordingError('Trình duyệt không hỗ trợ định dạng âm thanh được dịch vụ thi chấp nhận.');
-      startLockRef.current = false;
-      setIsStarting(false);
-      return;
-    }
-
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (error) {
-      if (mountedRef.current) setRecordingError(getMicrophoneError(error));
-      startLockRef.current = false;
-      if (mountedRef.current) setIsStarting(false);
-      return;
-    }
-    if (!mountedRef.current) {
-      stream.getTracks().forEach((track) => track.stop());
-      startLockRef.current = false;
-      return;
-    }
-
-    try {
-      const recorder = new MediaRecorder(stream, { mimeType });
-      streamRef.current = stream;
-      recorderRef.current = recorder;
-      chunksRef.current = [];
-      cancelOnStopRef.current = false;
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data);
-      };
-      recorder.onerror = () => {
-        if (mountedRef.current) setRecordingError('Đã xảy ra lỗi trong khi ghi âm. Hãy ghi lại câu trả lời.');
-        cancelOnStopRef.current = true;
-        chunksRef.current = [];
-        if (recorder.state !== 'inactive') {
-          try {
-            recorder.stop();
-          } catch {
-            releaseMicrophone();
-            if (mountedRef.current) setIsRecording(false);
-          }
-        } else {
-          releaseMicrophone();
-          if (mountedRef.current) setIsRecording(false);
-        }
-      };
-      recorder.onstop = async () => {
-        const wasCancelled = cancelOnStopRef.current;
-        releaseMicrophone();
-        if (mountedRef.current) setIsRecording(false);
-        if (wasCancelled || !mountedRef.current) return;
-
-        try {
-          const blob = new Blob(chunksRef.current, { type: mimeType });
-          const dataUrl = await blobToAudioDataUrl(blob);
-          if (mountedRef.current) onRecordingReady(dataUrl);
-        } catch (error) {
-          if (mountedRef.current) {
-            setRecordingError(error instanceof Error ? error.message : 'Không thể hoàn tất bản ghi âm.');
-          }
-        } finally {
-          chunksRef.current = [];
-        }
-      };
-      recorder.start();
-      setIsRecording(true);
-      setIsStarting(false);
-      startLockRef.current = false;
-      timerRef.current = window.setInterval(() => setDuration((value) => value + 1), 1000);
-    } catch (error) {
-      stream.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-      recorderRef.current = null;
-      setRecordingError(getMicrophoneError(error));
-      setIsStarting(false);
-      startLockRef.current = false;
-    }
-  };
-
-  const stopRecording = () => {
-    const recorder = recorderRef.current;
-    if (!recorder || recorder.state === 'inactive') return;
-    try {
-      recorder.stop();
-    } catch {
-      cancelOnStopRef.current = true;
-      chunksRef.current = [];
-      releaseMicrophone();
-      setIsRecording(false);
-      setRecordingError('Không thể hoàn tất bản ghi âm. Hãy ghi lại câu trả lời.');
-    }
-  };
-
-  const cancelRecording = () => {
-    cancelOnStopRef.current = true;
-    chunksRef.current = [];
-    stopRecording();
-    releaseMicrophone();
-    setIsRecording(false);
-    setDuration(0);
-  };
-
-  return (
-    <section className="interview-recorder" aria-labelledby="recording-title">
-      <h3 id="recording-title">Câu trả lời của bạn</h3>
-      <p className="interview-help">
-        Khi bắt đầu ghi âm, trình duyệt sẽ hỏi quyền sử dụng micro. Âm thanh được gửi đến máy chủ để phiên âm và xử lý câu trả lời.
-      </p>
-      <div className="interview-recorder-controls">
-        {isRecording ? (
-          <>
-            <span className="interview-recording-status" role="status">
-              <span className="interview-recording-indicator" aria-hidden="true" />
-              {t('Đang ghi âm')} · {formatDuration(duration)}
-            </span>
-            <button type="button" className="student-primary-button" onClick={stopRecording}>
-              {t('Dừng ghi âm')}
-            </button>
-            <button type="button" className="interview-secondary-button" onClick={cancelRecording}>
-              {t('Hủy bản ghi')}
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            className="student-primary-button"
-            onClick={startRecording}
-            disabled={isSubmitting || recordingAvailable || isStarting}
-          >
-            {t(isStarting ? 'Đang chờ quyền micro…' : recordingAvailable ? 'Đã có bản ghi' : 'Bắt đầu ghi âm')}
-          </button>
-        )}
-      </div>
-
-      {recordingAvailable && (
-        <div className="interview-recording-ready" role="status">
-          {t('Bản ghi đã sẵn sàng để gửi.')}
-          <button type="button" className="interview-text-button" onClick={onDiscard} disabled={isSubmitting}>
-            {t('Xóa bản ghi')}
-          </button>
-        </div>
-      )}
-      {recordingError && <p className="interview-error" role="alert">{t(recordingError)}</p>}
-      {submitError && <p className="interview-error" role="alert">{t(submitError)}</p>}
-
-      <button
-        type="button"
-        className="student-primary-button interview-submit-button"
-        onClick={onSubmit}
-        disabled={!recordingAvailable || isSubmitting || isRecording}
-      >
-        {t(isSubmitting ? 'Đang gửi và xử lý câu trả lời…' : 'Gửi câu trả lời')}
-      </button>
-      <p className="interview-processing-status" role="status" aria-live="polite">
-        {isSubmitting ? t('Đang gửi và xử lý câu trả lời. Quá trình phiên âm diễn ra đồng bộ trên máy chủ.') : ''}
-      </p>
-    </section>
-  );
+  return <section className="interview-recorder" aria-labelledby="recording-title">
+    <h3 id="recording-title">{t('Câu trả lời của bạn')}</h3>
+    <p>{t('Âm thanh được truyền trực tiếp để phiên âm và xử lý câu trả lời.')}</p>
+    <div className="device-check-meter" role="meter" aria-label={t('Mức tín hiệu micro')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={session.level}><span style={{ width: `${session.level}%` }} /></div>
+    <p role="status">{t(({ idle: 'Micro đang tắt.', connecting: 'Đang kết nối…', listening: 'Đang nghe.', stopping: 'Đang dừng…', ended: 'Đã gửi câu trả lời để xử lý.', error: 'Có lỗi với micro hoặc kết nối.' } as Record<string, string>)[session.state])}</p>
+    {session.error && <p className="interview-error" role="alert">{t(session.error)}</p>}
+    {submitError && <p className="interview-error" role="alert">{t(submitError)}</p>}
+    <label className="interview-microphone-field">{t('Micro đầu vào')}<select value={inputId} disabled={session.state === 'stopping'} onChange={(event) => { if (active) session.stop(); setInputId(event.target.value); }}><option value="">{t('Micro mặc định')}</option>{inputs.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `${t('Micro')} ${index + 1}`}</option>)}</select></label>
+    {(session.finals.length > 0 || session.partial) && <section className="interview-live-transcript" aria-live="polite"><h4>{t('Bản ghi nhận diện')}</h4>{session.finals.length > 0 && <p>{session.finals.join(' ')}</p>}{session.partial && <p className="partial">{session.partial}</p>}</section>}
+    <div className="interview-recorder-actions">
+      {!active ? <button type="button" className="student-primary-button" disabled={isSubmitting} onClick={() => { onDiscard(); void session.start(); }}>{t('Bắt đầu trả lời')}</button>
+        : <button type="button" className="student-primary-button" disabled={isSubmitting} onClick={session.stop}>{t('Dừng và gửi câu trả lời')}</button>}
+    </div>
+  </section>;
 }

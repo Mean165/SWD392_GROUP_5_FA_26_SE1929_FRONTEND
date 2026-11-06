@@ -47,7 +47,7 @@ export default function QuestionDetailPage() {
           </div>
           {canEdit && <div className="qg-inline-actions">
             <Link className="qg-button" to={`${APP_ROUTES.lecturer.questions}/${encodeURIComponent(question.questionId)}/edit`}>{t('Chỉnh sửa')}</Link>
-            <Link className="qg-button qg-button-secondary" to={`${APP_ROUTES.lecturer.rubrics}?questionId=${encodeURIComponent(question.questionId)}`}>{t('Rubric câu hỏi')}</Link>
+      <Link className="qg-button qg-button-secondary" to={`${APP_ROUTES.lecturer.rubricQuestions}?questionId=${encodeURIComponent(question.questionId)}`}>{t('Rubric câu hỏi')}</Link>
           </div>}
         </div>
         <div className="qg-detail-grid">
