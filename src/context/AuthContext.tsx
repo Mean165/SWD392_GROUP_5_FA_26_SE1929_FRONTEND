@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { User, LoginRequest } from '../types/auth';
 import { storage } from '../utils/storage';
 import * as authService from '../services/auth/authService';
@@ -19,6 +19,16 @@ const AUTH_STORAGE_KEY = 'swd_auth_user';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => storage.get<User>(AUTH_STORAGE_KEY));
+
+  useEffect(() => {
+    const expireSession = () => {
+      storage.remove(AUTH_STORAGE_KEY);
+      localStorage.removeItem('accessToken');
+      setUser(null);
+    };
+    window.addEventListener('aiviva:auth-expired', expireSession);
+    return () => window.removeEventListener('aiviva:auth-expired', expireSession);
+  }, []);
 
   const login = async (payload: LoginRequest): Promise<User> => {
     const authResponse = await authService.login(payload);

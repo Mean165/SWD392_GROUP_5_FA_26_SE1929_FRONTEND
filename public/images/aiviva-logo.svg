@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="cap" x1="52" y1="38" x2="198" y2="99" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#168DFF"/>
+      <stop offset=".52" stop-color="#0065F5"/>
+      <stop offset="1" stop-color="#12D8F6"/>
+    </linearGradient>
+    <linearGradient id="arc" x1="70" y1="91" x2="191" y2="214" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#91F8FF"/>
+      <stop offset=".43" stop-color="#16C9FF"/>
+      <stop offset=".76" stop-color="#1876FF"/>
+      <stop offset="1" stop-color="#BA4BFF"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="30" y1="185" x2="223" y2="199" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FB8EFF"/>
+      <stop offset=".48" stop-color="#B65EFF"/>
+      <stop offset=".73" stop-color="#218AFF"/>
+      <stop offset="1" stop-color="#34E7FF"/>
+    </linearGradient>
+    <linearGradient id="mic" x1="146" y1="125" x2="187" y2="181" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C6FFFF"/>
+      <stop offset=".48" stop-color="#45E4FF"/>
+      <stop offset="1" stop-color="#168AFF"/>
+    </linearGradient>
+    <linearGradient id="bars" x1="211" y1="130" x2="240" y2="189" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#42E7FF"/>
+      <stop offset=".52" stop-color="#398AFF"/>
+      <stop offset="1" stop-color="#CF4FFF"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M35 189c28-19 41-55 70-75 35-24 72-8 93 20 19 25 17 57-1 77-18 20-47 28-74 18" stroke="url(#arc)" stroke-width="17" stroke-linecap="round"/>
+  <path d="M27 184c21 28 69 40 116 34 34-4 63-22 82-49" stroke="url(#ribbon)" stroke-width="12" stroke-linecap="round"/>
+
+  <path d="M112 82c-20 5-31 21-29 41l5 28c2 18 15 31 34 34l16 1c8-4 14-10 16-17 1-4 8-6 11-9 2-3-3-7-5-10 4-3 9-6 8-9-1-4-8-8-7-13 4-14 0-28-11-37-10-9-24-13-38-9Z" fill="#0742C9"/>
+  <path d="M100 93c-16 10-24 27-22 47" stroke="#99FAFF" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+
+  <path d="m38 65 91-38 88 38-90 38-89-38Z" fill="url(#cap)"/>
+  <path d="m56 73 72 31 72-31v16c-39 28-105 28-144 0V73Z" fill="#0757DF"/>
+  <path d="M129 35v34" stroke="#9AF7FF" stroke-width="2" opacity=".75"/>
+  <path d="M216 66v48" stroke="#168DFF" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="216" cy="117" r="8" fill="#27D8FF"/>
+  <path d="m210 126-8 39h29l-9-39c-2-7-10-7-12 0Z" fill="url(#cap)"/>
+
+  <path d="M157 121c-14 0-24 11-24 25v23c0 13 10 24 24 24s24-11 24-24v-23c0-14-10-25-24-25Z" fill="url(#mic)" stroke="#BDFBFF" stroke-width="3"/>
+  <path d="m141 145 17 4m-17 8 17 4m-17 8 17 4" stroke="#0560C6" stroke-width="4" stroke-linecap="round"/>
+  <path d="M135 180c2 14 12 23 26 23s25-10 26-24" stroke="#4ADFFF" stroke-width="5" stroke-linecap="round"/>
+  <path d="M207 143v17m13-30v43m13-23v19" stroke="url(#bars)" stroke-width="8" stroke-linecap="round"/>
+
+  <path d="M51 121c6-4 9-10 10-18 1 8 4 14 11 18-7 3-10 9-11 17-1-8-4-14-10-17Z" fill="#27C9FF"/>
+  <path d="M229 94c4-2 6-6 7-11 1 5 3 9 8 11-5 2-7 6-8 11-1-5-3-9-7-11Z" fill="#C24CFF"/>
+</svg>

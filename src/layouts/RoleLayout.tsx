@@ -76,9 +76,7 @@ export default function RoleLayout({ role, roleLabel, navigation }: RoleLayoutPr
       <aside className="aiviva-sidebar">
         <Link className="aiviva-brand" to={`/${role}/dashboard`} aria-label="AiViva trang chủ">
           <span className="aiviva-brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="m12 2 2.7 6.8L22 12l-7.3 3.2L12 22l-2.7-6.8L2 12l7.3-3.2L12 2Z" />
-            </svg>
+            <img src="/images/aiviva-logo.svg" alt="" />
           </span>
           <span className="aiviva-brand-copy">
             <strong>AiViva</strong>
