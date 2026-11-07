@@ -5,7 +5,7 @@ import {
   getInterviewErrorMessage,
   getInterviewErrorStatus,
   getTurnSpeech,
-  submitAnswer,
+  startInterview,
 } from './interviewService';
 
 let originalAdapter: typeof apiClient.defaults.adapter;
@@ -34,6 +34,14 @@ afterEach(() => {
 });
 
 describe('interview API client', () => {
+  it('starts the assigned exam attempt ID, not an enrollment or interview ID', async () => {
+    originalAdapter = apiClient.defaults.adapter;
+    const configs = installAdapter({ success: true, message: 'ok', data: { attemptId: 'interview-uuid', examAttemptId: 'exam-attempt-uuid' } });
+    await startInterview('exam-attempt-uuid');
+    expect(configs[0].url).toBe('/interviews/start');
+    expect(JSON.parse(configs[0].data as string)).toEqual({ examAttemptId: 'exam-attempt-uuid' });
+  });
+
   it('requests TTS as authenticated Blob bytes using the backend turn URL', async () => {
     originalAdapter = apiClient.defaults.adapter;
     localStorage.setItem('accessToken', 'test-access-token');
@@ -56,30 +64,12 @@ describe('interview API client', () => {
     await expect(getTurnSpeech('turn-uuid')).rejects.toThrow('tệp âm thanh hợp lệ');
   });
 
-  it('submits exactly one complete audio data URL with the current attempt and turn', async () => {
+  it('accepts WAV question audio from the selected TTS provider', async () => {
     originalAdapter = apiClient.defaults.adapter;
-    const configs = installAdapter({
-      success: true,
-      message: 'processed',
-      data: {
-        turnId: 'turn-uuid',
-        transcriptText: 'Backend transcript',
-        completed: true,
-        followUpGenerated: false,
-        nextTurn: null,
-        answerClassification: null,
-        analysisSummary: null,
-        assessments: [],
-      },
-    });
-    const audioSegmentUrl = 'data:audio/webm;base64,dm9pY2U=';
+    const audio = new Blob(['wav bytes'], { type: 'audio/wav' });
+    installAdapter(audio);
 
-    await submitAnswer({ attemptId: 'attempt-uuid', turnId: 'turn-uuid', audioSegmentUrl });
-    expect(configs[0].url).toBe('/interviews/submit-answer');
-    expect(configs[0].timeout).toBe(120_000);
-    const body = JSON.parse(String(configs[0].data)) as Record<string, unknown>;
-    expect(body).toEqual({ attemptId: 'attempt-uuid', turnId: 'turn-uuid', audioSegmentUrl });
-    expect(body).not.toHaveProperty('transcriptText');
+    await expect(getTurnSpeech('turn-uuid')).resolves.toBe(audio);
   });
 
   it('maps authentication, authorization, expiry, and provider failures without exposing upstream details', () => {
@@ -92,6 +82,7 @@ describe('interview API client', () => {
     expect(getInterviewErrorMessage(makeAxiosError(400))).toContain('không hợp lệ');
     expect(getInterviewErrorMessage(makeAxiosError(404))).toContain('Không tìm thấy');
     expect(getInterviewErrorMessage(makeAxiosError(410))).toContain('hết hạn');
+    expect(getInterviewErrorMessage(makeAxiosError(500))).toContain('HTTP 500');
     expect(getInterviewErrorMessage(makeAxiosError(502), 'submit')).toContain('Bản ghi vẫn được giữ');
     expect(getInterviewErrorMessage(makeAxiosError(503), 'submit')).toContain('chưa sẵn sàng');
     expect(getInterviewErrorMessage(makeAxiosError(502), 'speech')).toContain('giọng đọc câu hỏi');

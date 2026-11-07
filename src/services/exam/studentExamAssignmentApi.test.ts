@@ -1,8 +1,9 @@
-import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
+import { AxiosError, type AxiosAdapter, type InternalAxiosRequestConfig } from 'axios';
 import { afterEach, describe, expect, it } from 'vitest';
 import apiClient from '../api/apiClient';
 import {
   getStudentExamAssignments,
+  getStudentExamHistory,
   getStudentExamEligibility,
 } from './studentExamAssignmentApi';
 
@@ -50,16 +51,16 @@ describe('studentExamAssignmentApi', () => {
     apiClient.defaults.adapter = adapter;
 
     const page = await getStudentExamAssignments({
-      from: '2026-10-18',
-      to: '2026-11-17',
+      from: '2026-10-18T00:00:00+07:00',
+      to: '2026-11-17T23:59:59+07:00',
       status: 'SCHEDULED',
       page: 0,
       size: 10,
     });
     expect(requestConfig?.url).toBe('/student/exam-assignments');
     expect(requestConfig?.params).toEqual({
-      from: '2026-10-18',
-      to: '2026-11-17',
+      from: '2026-10-18T00:00:00+07:00',
+      to: '2026-11-17T23:59:59+07:00',
       status: 'SCHEDULED',
       page: 0,
       size: 10,
@@ -90,5 +91,59 @@ describe('studentExamAssignmentApi', () => {
     expect(requestConfig?.url).toBe('/student/exam-assignments/assignment%2F1/eligibility');
     expect(result.canEnter).toBe(false);
     expect(result.opensAt).toBe('2026-10-18T09:00:00Z');
+  });
+
+  it('loads exam history using the paged history endpoint', async () => {
+    let requestConfig: InternalAxiosRequestConfig | undefined;
+    apiClient.defaults.adapter = async (config) => {
+      requestConfig = config;
+      return { data: { success: true, message: 'OK', data: { content: [], page: 1, size: 10, totalElements: 0, totalPages: 0 } }, status: 200, statusText: 'OK', headers: {}, config };
+    };
+
+    await expect(getStudentExamHistory(1, 10)).resolves.toMatchObject({ content: [], page: 1, size: 10 });
+    expect(requestConfig?.url).toBe('/student/exam-assignments/history');
+    expect(requestConfig?.params).toEqual({ page: 1, size: 10 });
+  });
+
+  it('preserves the authorization reason when exam history is forbidden', async () => {
+    apiClient.defaults.adapter = async (config) => {
+      throw new AxiosError('forbidden', 'ERR_BAD_REQUEST', config, undefined, { status: 403, statusText: 'Forbidden', headers: {}, config, data: null });
+    };
+    await expect(getStudentExamHistory(0, 10)).rejects.toThrow('Tài khoản hiện tại không có quyền xem lịch sử thi.');
+  });
+
+  it('sends inclusive Vietnam date-time bounds and omits the all-status filter', async () => {
+    let requestConfig: InternalAxiosRequestConfig | undefined;
+    const adapter: AxiosAdapter = async (config) => {
+      requestConfig = config;
+      return { data: { success: true, message: 'OK', data: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 } }, status: 200, statusText: 'OK', headers: {}, config };
+    };
+    apiClient.defaults.adapter = adapter;
+    const result = await getStudentExamAssignments({ from: '2026-11-04', to: '2026-12-04', status: 'ALL', page: 0, size: 20 });
+    expect(requestConfig?.params).toEqual({ page: 0, size: 20, from: '2026-11-04T00:00:00+07:00', to: '2026-12-04T23:59:59+07:00' });
+    expect(apiClient.getUri(requestConfig)).toContain('from=2026-11-04T00:00:00%2B07:00');
+    expect(result.content).toEqual([]);
+    expect(result.totalElements).toBe(0);
+  });
+
+  it('encodes plus signs in offset date-time query values', async () => {
+    let requestConfig: InternalAxiosRequestConfig | undefined;
+    const adapter: AxiosAdapter = async (config) => {
+      requestConfig = config;
+      return { data: { success: true, message: 'OK', data: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } }, status: 200, statusText: 'OK', headers: {}, config };
+    };
+    apiClient.defaults.adapter = adapter;
+    await getStudentExamAssignments({ from: '2026-11-04T00:00:00+07:00', to: '2026-12-04T23:59:59+07:00', page: 0, size: 10 });
+    expect(apiClient.getUri(requestConfig)).toContain('from=2026-11-04T00:00:00%2B07:00');
+  });
+
+  it('preserves validation and server error retry behavior', async () => {
+    const makeAdapter = (status: number): AxiosAdapter => async (config) => {
+      throw new AxiosError('request failed', status === 400 ? 'ERR_BAD_REQUEST' : 'ERR_BAD_RESPONSE', config, undefined, { status, statusText: 'Error', headers: {}, config, data: null });
+    };
+    apiClient.defaults.adapter = makeAdapter(400);
+    await expect(getStudentExamAssignments({ from: 'bad-date', to: '', page: 0, size: 10 })).rejects.toMatchObject({ status: 400, retryable: false, message: 'Bộ lọc ngày hoặc trạng thái không hợp lệ.' });
+    apiClient.defaults.adapter = makeAdapter(500);
+    await expect(getStudentExamAssignments({ from: '', to: '', page: 0, size: 10 })).rejects.toMatchObject({ status: 500, retryable: true, message: 'Máy chủ không tải được lịch thi (HTTP 500).' });
   });
 });

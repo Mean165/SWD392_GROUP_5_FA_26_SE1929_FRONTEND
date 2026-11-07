@@ -88,22 +88,7 @@ export default function RegisterPage() {
     <div className="register-card">
       {/* Header của Card: Logo icon học tập/AI, Tiêu đề & Phụ đề */}
       <div className="register-header">
-        <div className="register-logo-icon" aria-hidden="true">
-          {/* Biểu tượng công nghệ / thi cử */}
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-            <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
-          </svg>
-        </div>
+        <img className="register-logo-icon" src="/images/aiviva-logo.svg" alt="AiViva" />
         <h1 className="register-title">AI Oral Examination</h1>
         <p className="register-subtitle">{t('Đăng ký tài khoản tham gia thi vấn đáp trực tuyến')}</p>
       </div>

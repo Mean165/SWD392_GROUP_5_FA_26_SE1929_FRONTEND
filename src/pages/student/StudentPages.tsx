@@ -61,6 +61,7 @@ export function StudentHistoryPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -76,7 +77,7 @@ export function StudentHistoryPage() {
       if (active) setLoading(false);
     });
     return () => { active = false; };
-  }, [page]);
+  }, [page, reloadKey]);
 
   const statusLabel = (status: string) => ({
     PENDING: 'Chờ xác nhận',
@@ -84,6 +85,16 @@ export function StudentHistoryPage() {
     IN_PROGRESS: 'Đang diễn ra',
     COMPLETED: 'Đã hoàn thành',
   }[status] ?? status);
+
+  const historyTime = (item: StudentExamAssignment) => {
+    const values = [item.scheduledTime, ...(item.attempts ?? []).filter((attempt) => !attempt.voided).map((attempt) => attempt.scheduledTime)];
+    for (const value of values) {
+      if (!value) continue;
+      const date = new Date(value);
+      if (!Number.isNaN(date.getTime()) && date.getTime() !== 0) return date;
+    }
+    return null;
+  };
 
   return (
     <div className="student-page student-history-page">
@@ -94,7 +105,7 @@ export function StudentHistoryPage() {
       />
       {useMockExams && <p className="exam-schedule-mock-label" role="status">{t('Dữ liệu mẫu · Chỉ dùng để xem thử giao diện')}</p>}
       {loading && <section className="student-state-card info" role="status">{t('Đang tải lịch sử thi…')}</section>}
-      {error && <StudentNotice title="Không thể tải lịch sử thi" kind="warning">{t(error)}</StudentNotice>}
+      {error && <StudentNotice title="Không thể tải lịch sử thi" kind="warning">{<>{t(error)} <button type="button" className="exam-schedule-retry" onClick={() => setReloadKey((value) => value + 1)}>{t('Thử lại')}</button></>}</StudentNotice>}
       {!loading && !error && items.length === 0 && (
         <section className="student-empty-card">
           <span className="student-empty-icon" aria-hidden="true">↺</span>
@@ -104,15 +115,19 @@ export function StudentHistoryPage() {
       )}
       {!loading && !error && items.length > 0 && (
         <section className="student-history-list" aria-label="Danh sách lịch sử thi">
-          {items.map((item) => (
-            <article className="student-history-item" key={item.assignmentId}>
+          {items.map((item) => {
+            const scheduledAt = historyTime(item);
+            const status = !scheduledAt && item.assignmentStatus === 'SCHEDULED' ? 'Chưa xếp lịch' : statusLabel(item.assignmentStatus);
+            return <article className="student-history-item" key={item.assignmentId}>
               <div>
                 <h2>{t(item.sessionName || 'Buổi thi vấn đáp')}</h2>
-                <p>{new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'vi-VN', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(item.scheduledTime))}</p>
+                <p>{scheduledAt
+                  ? new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'vi-VN', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(scheduledAt)
+                  : 'Chưa xếp lịch'}</p>
               </div>
-              <span>{t(statusLabel(item.assignmentStatus))}</span>
-            </article>
-          ))}
+              <span>{t(status)}</span>
+            </article>;
+          })}
         </section>
       )}
       {totalPages > 1 && (

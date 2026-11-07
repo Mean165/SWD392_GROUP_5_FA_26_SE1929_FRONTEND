@@ -1,7 +1,7 @@
 import type { ApiResponse } from '../../types/user';
 
 export class ApiResponseError extends Error {
-  constructor(message: string) {
+  constructor(message: string, readonly errorCode?: string, readonly data?: unknown) {
     super(message);
     this.name = 'ApiResponseError';
   }
@@ -19,7 +19,9 @@ export const unwrapApiResponse = <T>(response: unknown): T => {
 
   const envelope = response as ApiResponse<T>;
   if (!envelope.success) {
-    throw new ApiResponseError(envelope.message || 'Yêu cầu không thành công.');
+    const data = envelope.data as unknown;
+    const code = envelope.errorCode ?? (data && typeof data === 'object' && 'code' in data ? String((data as { code?: unknown }).code ?? '') : undefined);
+    throw new ApiResponseError(envelope.message || 'Yêu cầu không thành công.', code || undefined, data);
   }
   if (envelope.data === undefined || envelope.data === null) {
     throw new ApiResponseError('Máy chủ không trả về dữ liệu cần thiết.');

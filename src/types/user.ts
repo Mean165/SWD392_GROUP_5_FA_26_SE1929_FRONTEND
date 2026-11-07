@@ -88,6 +88,7 @@ export interface ApiResponse<T> {
   message: string;
   data: T;
   timestamp?: string;
+  errorCode?: string | null;
 }
 
 // Giữ lại kiểu cũ cho khả năng tương thích ngược nếu cần

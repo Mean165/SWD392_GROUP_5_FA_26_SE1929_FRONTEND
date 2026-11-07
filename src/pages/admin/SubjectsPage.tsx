@@ -5,9 +5,11 @@ import { useLanguage } from '../../context/LanguageContext';
 import {
   addAdminSubjectTopics,
   createAdminSubject,
+  deleteAdminSubjectTopic,
   getAdminSubjectById,
   getAdminSubjects,
   updateAdminSubject,
+  updateAdminSubjectTopic,
 } from '../../services/system/systemService';
 import type {
   AdminSubject,
@@ -100,6 +102,8 @@ export default function SubjectsPage() {
   const [isAddingTopics, setIsAddingTopics] = useState(false);
   const [isSavingTopics, setIsSavingTopics] = useState(false);
   const [topicFormError, setTopicFormError] = useState('');
+  const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
+  const [editingTopicDraft, setEditingTopicDraft] = useState<TopicDraft | null>(null);
   const topicDraftSequence = useRef(0);
   const unauthorizedStarted = useRef(false);
 
@@ -241,9 +245,9 @@ export default function SubjectsPage() {
     setTopicFormError('');
   };
 
-  const validateTopicDrafts = (): AdminTopicRequest[] | null => {
+  const validateTopicDraftsFor = (drafts: TopicDraft[] = topicDrafts): AdminTopicRequest[] | null => {
     const topics: AdminTopicRequest[] = [];
-    for (const [index, draft] of topicDrafts.entries()) {
+    for (const [index, draft] of drafts.entries()) {
       const topicCode = draft.topicCode.trim();
       const topicName = draft.topicName.trim();
       const description = draft.description.trim();
@@ -277,7 +281,7 @@ export default function SubjectsPage() {
     event.preventDefault();
     if ((dialogMode !== 'create' && dialogMode !== 'edit') || isSaving || !validateForm()) return;
 
-    const topics = dialogMode === 'create' ? validateTopicDrafts() : [];
+    const topics = dialogMode === 'create' ? validateTopicDraftsFor() : [];
     if (dialogMode === 'create' && topics === null) return;
 
     const payload: AdminSubjectRequest = {
@@ -306,10 +310,10 @@ export default function SubjectsPage() {
     }
   };
 
-  const submitAdditionalTopics = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const submitAdditionalTopics = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
     if (!dialogSubject || isSavingTopics) return;
-    const topics = validateTopicDrafts();
+    const topics = validateTopicDraftsFor();
     if (topics === null) return;
     if (!topics.length) {
       setTopicFormError(t('Thêm ít nhất một chủ đề và nhập mã cùng tên cho từng chủ đề.'));
@@ -325,6 +329,46 @@ export default function SubjectsPage() {
       setTopicDrafts([]);
       setIsAddingTopics(false);
       setSuccessMessage(t('Chủ đề đã được thêm.'));
+    } catch (error: unknown) {
+      setTopicFormError(getAdminErrorMessage(error, t));
+      if (isAdminUnauthorized(error)) void requestLogout();
+    } finally {
+      setIsSavingTopics(false);
+    }
+  };
+
+  const saveTopicEdit = async () => {
+    if (!dialogSubject || !editingTopicId || !editingTopicDraft || isSavingTopics) return;
+    const validatedTopics = validateTopicDraftsFor([editingTopicDraft]);
+    if (!validatedTopics) return;
+    const [topic] = validatedTopics;
+    if (!topic) return;
+    setIsSavingTopics(true);
+    setTopicFormError('');
+    try {
+      const savedSubject = await updateAdminSubjectTopic(dialogSubject.subjectId, editingTopicId, topic);
+      setDialogSubject(savedSubject);
+      updateListWithSavedSubject(savedSubject, 'edit');
+      setEditingTopicId(null);
+      setEditingTopicDraft(null);
+      setSuccessMessage(t('Chủ đề đã được cập nhật.'));
+    } catch (error: unknown) {
+      setTopicFormError(getAdminErrorMessage(error, t));
+      if (isAdminUnauthorized(error)) void requestLogout();
+    } finally {
+      setIsSavingTopics(false);
+    }
+  };
+
+  const removeSavedTopic = async (topicId: string) => {
+    if (!dialogSubject || isSavingTopics) return;
+    setIsSavingTopics(true);
+    setTopicFormError('');
+    try {
+      const savedSubject = await deleteAdminSubjectTopic(dialogSubject.subjectId, topicId);
+      setDialogSubject(savedSubject);
+      updateListWithSavedSubject(savedSubject, 'edit');
+      setSuccessMessage(t('Chủ đề đã được xóa.'));
     } catch (error: unknown) {
       setTopicFormError(getAdminErrorMessage(error, t));
       if (isAdminUnauthorized(error)) void requestLogout();
@@ -537,6 +581,29 @@ export default function SubjectsPage() {
                     <textarea id="admin-subject-description" value={description} maxLength={2000} rows={4} onChange={(event) => setDescription(event.target.value)} disabled={isSaving} />
                     <small>{description.length} / 2000</small>
                   </div>
+                  {dialogMode === 'edit' && dialogSubject && <section className="admin-subject-topics-form" aria-labelledby="admin-edit-topics-title">
+                    <div className="admin-subject-detail-section-heading">
+                      <div><h3 id="admin-edit-topics-title">{t('Chủ đề')}</h3><p>{t('Quản lý các chủ đề thuộc môn học này.')}</p></div>
+                      {!isAddingTopics && <button type="button" className="admin-outline-button" onClick={() => { setTopicFormError(''); setIsAddingTopics(true); if (!topicDrafts.length) addTopicDraft(); }} disabled={isSaving || isSavingTopics}><span aria-hidden="true">+</span>{t('Thêm chủ đề')}</button>}
+                    </div>
+                    {dialogSubject.topics?.map((topic, index) => editingTopicId === topic.topicId && editingTopicDraft ? (
+                      <div key={topic.topicId}>
+                        <TopicDraftFields draft={editingTopicDraft} index={index} idPrefix="admin-edit-topic" disabled={isSavingTopics} onChange={(id, field, value) => setEditingTopicDraft((draft) => draft ? { ...draft, [field]: value } : draft)} onRemove={() => { setEditingTopicId(null); setEditingTopicDraft(null); setTopicFormError(''); }} />
+                        <div className="admin-topic-row-actions"><button type="button" className="admin-primary-button" onClick={() => void saveTopicEdit()} disabled={isSavingTopics}>{isSavingTopics ? t('Đang lưu…') : t('Lưu chủ đề')}</button><button type="button" className="admin-outline-button" onClick={() => { setEditingTopicId(null); setEditingTopicDraft(null); setTopicFormError(''); }} disabled={isSavingTopics}>{t('Hủy')}</button></div>
+                      </div>
+                    ) : <div className="admin-subject-topic-list-item" key={topic.topicId}>
+                      <span className="admin-subject-code">{topic.topicCode}</span><div><strong>{topic.topicName}</strong><p>{topic.description?.trim() || t('Chưa có mô tả.')}</p></div>
+                      <div className="admin-topic-row-actions"><button type="button" className="admin-outline-button" onClick={() => { setEditingTopicId(topic.topicId); setEditingTopicDraft({ id: 0, topicCode: topic.topicCode, topicName: topic.topicName, description: topic.description ?? '' }); setTopicFormError(''); }} disabled={isSavingTopics}>{t('Sửa')}</button><button type="button" className="admin-outline-button admin-topic-delete-button" onClick={() => void removeSavedTopic(topic.topicId)} disabled={isSavingTopics}>{t('Xóa')}</button></div>
+                    </div>)}
+                    {!dialogSubject.topics?.length && <p className="admin-subject-topic-empty">{t('Môn học chưa có chủ đề.')}</p>}
+                    {isAddingTopics && <div className="admin-topic-batch-form">
+                      {topicDrafts.map((draft, index) => <TopicDraftFields key={draft.id} draft={draft} index={index} idPrefix="admin-edit-new-topic" disabled={isSavingTopics} onChange={updateTopicDraft} onRemove={removeTopicDraft} />)}
+                      <button type="button" className="admin-outline-button admin-topic-add-row" onClick={addTopicDraft} disabled={isSavingTopics}><span aria-hidden="true">+</span>{t('Thêm dòng chủ đề')}</button>
+                      {topicFormError && <div className="admin-feedback error" role="alert">{topicFormError}</div>}
+                      <div className="admin-subject-modal-actions"><button type="button" className="admin-outline-button" onClick={() => { setIsAddingTopics(false); setTopicDrafts([]); setTopicFormError(''); }} disabled={isSavingTopics}>{t('Hủy')}</button><button type="button" className="admin-primary-button" onClick={() => void submitAdditionalTopics()} disabled={isSavingTopics || !topicDrafts.length}>{isSavingTopics ? t('Đang lưu…') : t('Lưu chủ đề')}</button></div>
+                    </div>}
+                    {topicFormError && !isAddingTopics && <div className="admin-feedback error" role="alert">{topicFormError}</div>}
+                  </section>}
                   {dialogMode === 'create' && <section className="admin-subject-topics-form" aria-labelledby="admin-create-topics-title">
                     <div className="admin-subject-detail-section-heading">
                       <div><h3 id="admin-create-topics-title">{t('Chủ đề')}</h3><p>{t('Có thể tạo môn học chưa có chủ đề.')}</p></div>

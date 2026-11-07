@@ -122,5 +122,9 @@ export const refreshToken = async (payload: RefreshTokenRequest): Promise<string
 export const getCurrentUser = async (): Promise<User | null> => {
   const response = await apiClient.get('/auth/me');
   const data = response.data?.data ?? response.data;
-  return data || null;
+  if (!data) return null;
+  return {
+    ...data,
+    role: normalizeRole(data.roleName || data.role?.roleCode || data.role),
+  } as User;
 };

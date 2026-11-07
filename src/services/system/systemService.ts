@@ -53,6 +53,25 @@ export const addAdminSubjectTopics = async (
   return unwrap(response.data);
 };
 
+export const updateAdminSubjectTopic = async (
+  subjectId: string,
+  topicId: string,
+  topic: AdminTopicRequest,
+): Promise<AdminSubject> => {
+  const response = await apiClient.put<ApiResponse<AdminSubject>>(
+    `/system/admin/subjects/${encodeURIComponent(subjectId)}/topics/${encodeURIComponent(topicId)}`,
+    topic,
+  );
+  return unwrap(response.data);
+};
+
+export const deleteAdminSubjectTopic = async (subjectId: string, topicId: string): Promise<AdminSubject> => {
+  const response = await apiClient.delete<ApiResponse<AdminSubject>>(
+    `/system/admin/subjects/${encodeURIComponent(subjectId)}/topics/${encodeURIComponent(topicId)}`,
+  );
+  return unwrap(response.data);
+};
+
 export const updateAdminSubject = async (subjectId: string, payload: AdminSubjectRequest): Promise<AdminSubject> => {
   const response = await apiClient.put<ApiResponse<AdminSubject>>(
     `/system/admin/subjects/${encodeURIComponent(subjectId)}`,

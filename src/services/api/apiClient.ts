@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-const apiBaseUrl = import.meta.env.DEV
-  ? '/api'
-  : import.meta.env.VITE_API_BASE_URL || '/api';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api' : '/api');
 
 const apiClient = axios.create({
   baseURL: apiBaseUrl,
@@ -44,6 +42,7 @@ apiClient.interceptors.response.use(
     // Nếu token hết hạn hoặc không hợp lệ (401), xóa token lưu trong máy
     if (error?.response?.status === 401) {
       localStorage.removeItem('accessToken');
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('aiviva:auth-expired'));
     }
     return Promise.reject(error);
   },

@@ -1,0 +1,50 @@
+.question-bank-view-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 1.5rem;
+  margin: 1rem 0 1.25rem;
+  border-bottom: 1px solid #d7dee8;
+}
+
+.question-bank-view-tab {
+  min-height: 42px;
+  padding: 0.55rem 0.15rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: #5c6b82;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.question-bank-view-tab:hover {
+  color: #1f4fbf;
+}
+
+.question-bank-view-tab.active {
+  border-bottom-color: #3478f6;
+  color: #1f4fbf;
+}
+
+.question-bank-view-tab:focus-visible {
+  outline: 2px solid #3478f6;
+  outline-offset: 3px;
+}
+
+.question-bank-create-panel > .qg-page-embedded {
+  max-width: none;
+  padding: 0;
+}
+
+@media (max-width: 640px) {
+  .question-bank-view-tabs {
+    gap: 1rem;
+    overflow-x: auto;
+  }
+
+  .question-bank-view-tab {
+    flex: 0 0 auto;
+  }
+}

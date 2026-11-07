@@ -1,5 +1,5 @@
 export type QuestionStatus = 'DRAFT' | 'APPROVED' | 'REJECTED';
-export type BloomLevel = 'REMEMBER' | 'UNDERSTAND' | 'APPLY' | 'ANALYZE';
+export type BloomLevel = 'REMEMBER' | 'UNDERSTAND' | 'APPLY' | 'ANALYZE' | 'EVALUATE' | 'CREATE';
 export type QuestionSource = 'AI_GENERATED' | 'AI' | 'MANUAL' | 'IMPORTED';
 export type LegacyQuestionStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 export type LegacyBloomLevel = BloomLevel | 'EVALUATE' | 'CREATE';
@@ -174,4 +174,27 @@ export interface QuestionListQuery {
   page?: number;
   size?: number;
   bankOnly?: boolean;
+}
+
+export type ApprovalStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
+
+export interface QuestionBankItem {
+  questionId: string;
+  topicId: string;
+  topicName?: string;
+  questionText: string;
+  bloomLevel: BloomLevel;
+  approvalStatus: ApprovalStatus | string;
+  createdAt?: string;
+  source?: 'SUBJECT' | 'QUESTION_OVERRIDE';
+}
+
+export interface QuestionRubricResponse {
+  source: 'SUBJECT' | 'QUESTION_OVERRIDE';
+  rubric: import('./rubric').Rubric | null;
+  criteria: import('./rubric').Criterion[];
+}
+
+export interface QuestionRubricOverrideRequest {
+  criteria: Array<Pick<import('./rubric').Criterion, 'criteriaName' | 'expectedKnowledgePoints' | 'weightRatio'>>;
 }

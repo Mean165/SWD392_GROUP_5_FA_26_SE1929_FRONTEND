@@ -587,6 +587,21 @@
   min-width: 0;
 }
 
+.admin-subject-topic-list-item {
+  display: grid;
+  grid-template-columns: minmax(112px, auto) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 1px solid #e7edf4;
+  border-radius: 6px;
+  background: #fbfcfe;
+}
+
+.admin-subject-topic-list-item > div:nth-child(2) { min-width: 0; }
+.admin-topic-row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-topic-delete-button { color: #a5312b; }
+
 .admin-subject-topic-list .admin-subject-code {
   display: inline-block;
   max-width: 100%;
@@ -653,6 +668,8 @@
 }
 
 @media (max-width: 520px) {
+  .admin-subject-topic-list-item { grid-template-columns: minmax(0, 1fr); }
+  .admin-topic-row-actions { justify-content: flex-start; }
   .admin-subject-modal-backdrop {
     align-items: end;
     padding: 0;

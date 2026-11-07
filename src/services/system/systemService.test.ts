@@ -5,6 +5,7 @@ import {
   addAdminSubjectTopics,
   assignLecturersToSubject,
   createAdminSubject,
+  deleteAdminSubjectTopic,
   getAdminSubjectById,
   getAdminLecturers,
   getAdminSubjects,
@@ -13,6 +14,7 @@ import {
   getSubjectAssignments,
   unassignLecturerFromSubject,
   updateAdminSubject,
+  updateAdminSubjectTopic,
   updateLanguageDefaults,
 } from './systemService';
 
@@ -92,6 +94,22 @@ describe('admin system service', () => {
       { url: '/system/admin/lecturers', method: 'get', authorization: 'Bearer admin-token' },
       { url: '/system/admin/subjects', method: 'get', authorization: 'Bearer admin-token' },
       { url: '/system/admin/lecturers/lecturer%2Fuuid/subjects', method: 'get', authorization: 'Bearer admin-token' },
+    ]);
+  });
+
+  it('updates and deletes subject topics with both resource IDs', async () => {
+    const requests: Array<{ url?: string; method?: string; data?: unknown }> = [];
+    const subject = { subjectId: 'subject-1', subjectCode: 'S1', subjectName: 'Subject', description: null, lecturerIds: [], lecturers: [], topicCount: 0, topics: [] };
+    apiClient.defaults.adapter = async (config) => {
+      requests.push({ url: config.url, method: config.method, data: config.data ? JSON.parse(config.data as string) : undefined });
+      return { data: { success: true, message: 'ok', data: subject, timestamp: 'now' }, status: 200, statusText: 'OK', headers: {}, config };
+    };
+
+    await expect(updateAdminSubjectTopic('subject/1', 'topic/2', { topicCode: 'T2', topicName: 'Updated', description: '' })).resolves.toEqual(subject);
+    await expect(deleteAdminSubjectTopic('subject/1', 'topic/2')).resolves.toEqual(subject);
+    expect(requests).toEqual([
+      { url: '/system/admin/subjects/subject%2F1/topics/topic%2F2', method: 'put', data: { topicCode: 'T2', topicName: 'Updated', description: '' } },
+      { url: '/system/admin/subjects/subject%2F1/topics/topic%2F2', method: 'delete', data: undefined },
     ]);
   });
 
