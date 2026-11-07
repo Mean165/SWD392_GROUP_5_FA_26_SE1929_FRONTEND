@@ -92,7 +92,7 @@ describe('EvaluationDetailPage score fields', () => {
     const lecturerScore = screen.getByRole('spinbutton', { name: 'Điểm giảng viên câu 1' });
     await waitFor(() => expect(lecturerScore).toBeEnabled());
     fireEvent.change(lecturerScore, { target: { value: '3' } });
-    expect(screen.getByText('4,00')).toBeInTheDocument();
+    expect(screen.getByText('Tổng điểm')?.parentElement).toHaveTextContent('4,00');
 
     fireEvent.click(screen.getByRole('button', { name: 'Lưu điểm giảng viên' }));
     await waitFor(() => expect(mocks.saveGradingScores).toHaveBeenCalledWith('submission-1', 5, [{
@@ -206,7 +206,7 @@ describe('EvaluationDetailPage score fields', () => {
       { questionId: 'question-3', criterionId: 'criterion-1', score: 0.3, maxScore: 1.284, source: 'MANUAL', overrideReason: null, comment: null },
       { questionId: 'question-3', criterionId: 'criterion-2', score: 0.5, maxScore: 2.14, source: 'MANUAL', overrideReason: null, comment: null },
       { questionId: 'question-3', criterionId: 'criterion-3', score: 0.2, maxScore: 0.856, source: 'MANUAL', overrideReason: null, comment: null },
-    ]));
+    ], []));
     expect(screen.queryByText(/vượt giới hạn|điểm phải từ/i)).not.toBeInTheDocument();
   });
 
